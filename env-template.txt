@@ -1,0 +1,19 @@
+# Environment Configuration for SchoolConnect
+
+# Copy this file to .env.local and configure as needed
+
+# ===== DEMO MODE (for testing without Azure) =====
+# Set to "true" to enable demo mode and test the UI without Azure authentication
+NEXT_PUBLIC_DEMO_MODE=true
+
+# ===== AZURE AUTHENTICATION (for production) =====
+# Get this from Azure Portal > App Registrations > Your App > Application (client) ID
+# NEXT_PUBLIC_AZURE_CLIENT_ID=your-azure-client-id-here
+
+# Optional: Azure Tenant ID (if you want to restrict to specific tenant)
+# NEXT_PUBLIC_AZURE_TENANT_ID=your-tenant-id-here
+
+# ===== HOW TO USE =====
+# 1. For testing: Set NEXT_PUBLIC_DEMO_MODE=true (leave Azure ID empty)
+# 2. For production: Set NEXT_PUBLIC_DEMO_MODE=false and add your Azure Client ID
+# 3. Restart your development server after changing these values
