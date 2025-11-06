@@ -8,9 +8,13 @@ import { ThemeProvider } from '@/components/theme-provider'
 
 export const metadata: Metadata = {
   title: 'SchoolConnect - Berkeley Prep',
-  description: 'Connect with your school community. Share updates, join clubs, and stay informed about campus life.',
+  description:
+    'Connect with your school community. Share updates, join clubs, and stay informed about campus life.',
   generator: 'v0.app',
 }
+
+// ✅ Combine your fonts once outside the component (server-safe)
+const fontVars = `${GeistSans.variable} ${GeistMono.variable}`
 
 export default function RootLayout({
   children,
@@ -19,16 +23,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
+      {/* ✅ Apply deterministic, precomputed font vars */}
+      <body className={`font-sans ${fontVars}`} suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
-          enableSystem
+          enableSystem={false} // 🔧 make deterministic theme
           disableTransitionOnChange
         >
-          <AuthProvider>
-            {children}
-          </AuthProvider>
+          <AuthProvider>{children}</AuthProvider>
         </ThemeProvider>
         <Analytics />
       </body>

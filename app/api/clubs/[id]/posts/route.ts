@@ -1,0 +1,136 @@
+import { NextRequest, NextResponse } from 'next/server'
+import pool from '@/lib/db'
+
+// GET /api/clubs/[id]/posts - Get all posts for a club
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> } // Changed type
+) {
+  try {
+    const { id: clubId } = await params // Await params
+    const { searchParams } = new URL(request.url)
+    const userId = searchParams.get('userId')
+    const query = `
+      SELECT 
+        cp.*,
+        u.name as author_name,
+        u.avatar_url as author_avatar,
+        u.email as author_email
+      FROM club_posts cp
+      JOIN users u ON cp.author_id = u.id
+      WHERE cp.club_id = $1
+      ORDER BY cp.created_at DESC
+    `
+
+    const result = await pool.query(query, [clubId])
+
+    // If userId provided, check which posts user liked
+    if (userId) {
+      const likesQuery = `
+        SELECT post_id FROM post_likes WHERE user_id = $1 AND post_id = ANY($2::uuid[])
+      `
+      const postIds = result.rows.map((p: any) => p.id)
+      
+      if (postIds.length > 0) {
+        const likesResult = await pool.query(likesQuery, [userId, postIds])
+        const likedPostIds = new Set(likesResult.rows.map((r: any) => r.post_id))
+
+        result.rows.forEach((post: any) => {
+          post.isLiked = likedPostIds.has(post.id)
+        })
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: result.rows,
+      count: result.rows.length,
+    })
+  } catch (error) {
+    console.error('Error fetching club posts:', error)
+    return NextResponse.json(
+      { success: false, error: 'Failed to fetch posts' },
+      { status: 500 }
+    )
+  }
+}
+
+// POST /api/clubs/[id]/posts - Create a new post for a club (members only)
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { id: clubId } = await params // Await params
+    const body = await request.json()
+    const userId = body.userId
+    const content = body.content
+    const imageUrl = body.imageUrl
+
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: 'User ID required' },
+        { status: 400 }
+      )
+    }
+
+    if (!content || !content.trim()) {
+      return NextResponse.json(
+        { success: false, error: 'Post content is required' },
+        { status: 400 }
+      )
+    }
+
+    // Verify user is a member of the club
+    const memberCheck = await pool.query(
+      'SELECT id FROM club_members WHERE club_id = $1 AND user_id = $2',
+      [clubId, userId]
+    )
+
+    if (memberCheck.rows.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Only club members can post' },
+        { status: 403 }
+      )
+    }
+
+    // Create post
+    const insertQuery = `
+      INSERT INTO club_posts (club_id, author_id, content, image_url)
+      VALUES ($1, $2, $3, $4)
+      RETURNING *
+    `
+
+    const result = await pool.query(insertQuery, [
+      clubId,
+      userId,
+      content.trim(),
+      imageUrl || null,
+    ])
+
+    // Get author info
+    const authorQuery = 'SELECT name, avatar_url, email FROM users WHERE id = $1'
+    const authorResult = await pool.query(authorQuery, [userId])
+    const author = authorResult.rows[0]
+
+    const post = {
+      ...result.rows[0],
+      author_name: author.name,
+      author_avatar: author.avatar_url,
+      author_email: author.email,
+      isLiked: false,
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: post,
+    }, { status: 201 })
+  } catch (error) {
+    console.error('Error creating post:', error)
+    return NextResponse.json(
+      { success: false, error: 'Failed to create post' },
+      { status: 500 }
+    )
+  }
+}
+

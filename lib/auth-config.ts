@@ -5,7 +5,7 @@ export const msalConfig: Configuration = {
   auth: {
     clientId: process.env.NEXT_PUBLIC_AZURE_CLIENT_ID || "", // You'll need to get this from Azure Portal
     authority: "https://login.microsoftonline.com/common", // Use "common" for multi-tenant
-    redirectUri: typeof window !== "undefined" ? window.location.origin : "http://localhost:3000",
+    redirectUri: typeof window !== "undefined" ? window.location.origin : "",
   },
   cache: {
     cacheLocation: "sessionStorage", // This configures where your cache will be stored

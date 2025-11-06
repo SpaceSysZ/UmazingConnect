@@ -1,319 +1,246 @@
 "use client"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import {
-  Heart,
-  MessageCircle,
-  Share2,
-  MoreHorizontal,
-  ImageIcon,
-  Calendar,
-  MapPin,
-  Users,
-  Megaphone,
-} from "lucide-react"
+import { Heart, MessageCircle, Share2, Users, Loader2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { useAuth } from "@/contexts/auth-context"
 
-interface Post {
+interface ClubPost {
   id: string
-  author: {
-    name: string
-    avatar: string
-    role: "student" | "faculty" | "admin"
-    year?: string
-  }
+  club_id: string
+  club_name?: string
+  club_avatar?: string
+  author_name: string
+  author_avatar: string | null
+  author_email: string
   content: string
-  timestamp: string
-  type: "post" | "announcement" | "event" | "club"
-  likes: number
-  comments: number
-  shares: number
-  isLiked: boolean
-  image?: string
-  eventDetails?: {
-    date: string
-    location: string
-  }
-  clubInfo?: {
-    name: string
-    memberCount: number
-  }
+  image_url: string | null
+  likes_count: number
+  comments_count: number
+  created_at: string
+  isLiked?: boolean
 }
 
-const mockPosts: Post[] = [
-  {
-    id: "1",
-    author: {
-      name: "Principal Johnson",
-      avatar: "/school-principal.png",
-      role: "admin",
-    },
-    content:
-      "Reminder: Parent-Teacher conferences are scheduled for next week. Please check your email for your assigned time slots. Looking forward to discussing your child's progress!",
-    timestamp: "2 hours ago",
-    type: "announcement",
-    likes: 24,
-    comments: 8,
-    shares: 12,
-    isLiked: false,
-  },
-  {
-    id: "2",
-    author: {
-      name: "Sarah Chen",
-      avatar: "/student-sarah.png",
-      role: "student",
-      year: "Senior",
-    },
-    content:
-      "Just finished our robotics competition! Our team placed 2nd in the regional finals. So proud of everyone's hard work this semester. Next stop: state championships! 🤖",
-    timestamp: "4 hours ago",
-    type: "post",
-    likes: 89,
-    comments: 23,
-    shares: 15,
-    isLiked: true,
-    image: "/robotics-competition.png",
-  },
-  {
-    id: "3",
-    author: {
-      name: "Drama Club",
-      avatar: "/drama-masks.png",
-      role: "student",
-    },
-    content:
-      "Auditions for our spring musical 'Hamilton' are now open! We're looking for talented singers, dancers, and actors. No experience necessary - just bring your passion!",
-    timestamp: "6 hours ago",
-    type: "club",
-    likes: 45,
-    comments: 18,
-    shares: 28,
-    isLiked: false,
-    eventDetails: {
-      date: "March 15-16, 2024",
-      location: "Main Auditorium",
-    },
-    clubInfo: {
-      name: "Drama Club",
-      memberCount: 67,
-    },
-  },
-  {
-    id: "4",
-    author: {
-      name: "Mr. Rodriguez",
-      avatar: "/teacher-rodriguez.png",
-      role: "faculty",
-    },
-    content:
-      "Congratulations to all students who participated in the Science Fair! The creativity and dedication shown in your projects was truly inspiring. Special shoutout to the winners!",
-    timestamp: "1 day ago",
-    type: "post",
-    likes: 156,
-    comments: 34,
-    shares: 22,
-    isLiked: true,
-  },
-]
-
 export function HomeContent() {
-  const [posts, setPosts] = useState<Post[]>(mockPosts)
-  const [newPost, setNewPost] = useState("")
+  const { user } = useAuth()
+  const [posts, setPosts] = useState<ClubPost[]>([])
+  const [loading, setLoading] = useState(true)
+  const [clubNames, setClubNames] = useState<Map<string, { name: string; avatar: string | null }>>(new Map())
 
-  const handleLike = (postId: string) => {
-    setPosts(
-      posts.map((post) =>
-        post.id === postId
-          ? {
-              ...post,
-              isLiked: !post.isLiked,
-              likes: post.isLiked ? post.likes - 1 : post.likes + 1,
-            }
-          : post,
-      ),
-    )
-  }
-
-  const handleCreatePost = () => {
-    if (newPost.trim()) {
-      const post: Post = {
-        id: Date.now().toString(),
-        author: {
-          name: "John Smith",
-          avatar: "/student-john.png",
-          role: "student",
-          year: "Junior",
-        },
-        content: newPost,
-        timestamp: "Just now",
-        type: "post",
-        likes: 0,
-        comments: 0,
-        shares: 0,
-        isLiked: false,
+  // Load all posts from all clubs
+  const loadPosts = async () => {
+    try {
+      setLoading(true)
+      
+      // First, get all clubs to map IDs to names
+      const clubsResponse = await fetch("/api/clubs")
+      if (clubsResponse.ok) {
+        const clubsData = await clubsResponse.json()
+        const clubMap = new Map()
+        clubsData.data.forEach((club: any) => {
+          clubMap.set(club.id, {
+            name: club.name,
+            avatar: club.image_url,
+          })
+        })
+        setClubNames(clubMap)
       }
-      setPosts([post, ...posts])
-      setNewPost("")
+
+      // Get all clubs and their posts
+      const clubsRes = await fetch("/api/clubs")
+      if (!clubsRes.ok) return
+
+      const clubsData = await clubsRes.json()
+      const allPosts: ClubPost[] = []
+
+      // Fetch posts for each club
+      for (const club of clubsData.data) {
+        const postsUrl = user?.id
+          ? `/api/clubs/${club.id}/posts?userId=${user.id}`
+          : `/api/clubs/${club.id}/posts`
+        
+        const postsRes = await fetch(postsUrl)
+        if (postsRes.ok) {
+          const postsData = await postsRes.json()
+          const clubPosts = postsData.data.map((post: any) => ({
+            ...post,
+            club_name: club.name,
+            club_avatar: club.image_url,
+            club_id: club.id,
+          }))
+          allPosts.push(...clubPosts)
+        }
+      }
+
+      // Sort by date (newest first)
+      allPosts.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+      setPosts(allPosts)
+    } catch (error) {
+      console.error("Error loading posts:", error)
+    } finally {
+      setLoading(false)
     }
   }
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case "admin":
-        return "bg-red-100 text-red-800"
-      case "faculty":
-        return "bg-green-100 text-green-800"
-      case "student":
-        return "bg-blue-100 text-blue-800"
-      default:
-        return "bg-gray-100 text-gray-800"
+  useEffect(() => {
+    loadPosts()
+  }, [user?.id])
+
+  const handleLike = async (postId: string, isLiked: boolean) => {
+    if (!user?.id) {
+      alert("Please log in to like posts")
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/posts/${postId}/like`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setPosts((prevPosts) =>
+          prevPosts.map((post) =>
+            post.id === postId
+              ? {
+                  ...post,
+                  isLiked: data.liked,
+                  likes_count: data.liked ? post.likes_count + 1 : post.likes_count - 1,
+                }
+              : post
+          )
+        )
+      }
+    } catch (error) {
+      console.error("Error toggling like:", error)
     }
   }
 
-  const getPostIcon = (type: string) => {
-    switch (type) {
-      case "announcement":
-        return <Megaphone className="h-4 w-4" />
-      case "event":
-        return <Calendar className="h-4 w-4" />
-      case "club":
-        return <Users className="h-4 w-4" />
-      default:
-        return null
-    }
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+
+    if (diffMins < 1) return "Just now"
+    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? "s" : ""} ago`
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`
+    return date.toLocaleDateString()
+  }
+
+  if (loading) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-8 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 mx-auto mb-4 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading club posts...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-      {/* Create Post Section */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src="/student-john.png" alt="Your avatar" />
-              <AvatarFallback className="bg-primary text-primary-foreground">JS</AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <Textarea
-                placeholder="What's happening at school today?"
-                value={newPost}
-                onChange={(e) => setNewPost(e.target.value)}
-                className="min-h-[80px] resize-none border-0 p-0 focus-visible:ring-0 text-base"
-              />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" className="text-muted-foreground">
-                <ImageIcon className="h-4 w-4 mr-2" />
-                Photo
-              </Button>
-            </div>
-            <Button onClick={handleCreatePost} disabled={!newPost.trim()} className="px-6">
-              Post
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Header */}
+      <div className="text-center space-y-2">
+        <h1 className="text-3xl font-bold text-foreground">Club Feed</h1>
+        <p className="text-muted-foreground">Posts from all school clubs</p>
+      </div>
 
       {/* Posts Feed */}
       <div className="space-y-4">
-        {posts.map((post) => (
-          <Card key={post.id} className="overflow-hidden">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={post.author.avatar || "/placeholder.svg"} alt={post.author.name} />
-                    <AvatarFallback className="bg-primary text-primary-foreground">
-                      {post.author.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-card-foreground">{post.author.name}</h3>
-                      <Badge variant="secondary" className={getRoleColor(post.author.role)}>
-                        {post.author.role === "student" && post.author.year ? post.author.year : post.author.role}
-                      </Badge>
-                      {getPostIcon(post.type) && <div className="text-muted-foreground">{getPostIcon(post.type)}</div>}
-                    </div>
-                    <p className="text-sm text-muted-foreground">{post.timestamp}</p>
-                  </div>
-                </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-
-            <CardContent className="pt-0 space-y-4">
-              <p className="text-card-foreground leading-relaxed">{post.content}</p>
-
-              {post.image && (
-                <div className="rounded-lg overflow-hidden">
-                  <img src={post.image || "/placeholder.svg"} alt="Post content" className="w-full h-64 object-cover" />
-                </div>
-              )}
-
-              {post.eventDetails && (
-                <div className="bg-muted rounded-lg p-3 space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
-                    <span>{post.eventDetails.date}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
-                    <span>{post.eventDetails.location}</span>
-                  </div>
-                </div>
-              )}
-
-              {post.clubInfo && (
-                <div className="bg-muted rounded-lg p-3">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Users className="h-4 w-4" />
-                    <span>{post.clubInfo.memberCount} members</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Post Actions */}
-              <div className="flex items-center justify-between pt-2 border-t border-border">
-                <div className="flex items-center gap-6">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleLike(post.id)}
-                    className={`gap-2 ${post.isLiked ? "text-red-500 hover:text-red-600" : "text-muted-foreground"}`}
-                  >
-                    <Heart className={`h-4 w-4 ${post.isLiked ? "fill-current" : ""}`} />
-                    <span>{post.likes}</span>
-                  </Button>
-
-                  <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
-                    <MessageCircle className="h-4 w-4" />
-                    <span>{post.comments}</span>
-                  </Button>
-
-                  <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
-                    <Share2 className="h-4 w-4" />
-                    <span>{post.shares}</span>
-                  </Button>
-                </div>
-              </div>
+        {posts.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+              <p className="text-lg text-muted-foreground">No club posts yet</p>
+              <p className="text-sm text-muted-foreground mt-2">Join a club to see posts from your clubs!</p>
             </CardContent>
           </Card>
-        ))}
+        ) : (
+          posts.map((post) => (
+            <Card key={post.id} className="overflow-hidden">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={post.club_avatar || "/placeholder.svg"} alt={post.club_name || "Club"} />
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        {(post.club_name || "C")
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .substring(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-card-foreground">{post.club_name || "Club"}</h3>
+                        <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                          <Users className="h-3 w-3 mr-1" />
+                          Club
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span>Posted by {post.author_name}</span>
+                        <span>•</span>
+                        <span>{formatTimestamp(post.created_at)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+
+              <CardContent className="pt-0 space-y-4">
+                <p className="text-card-foreground leading-relaxed">{post.content}</p>
+
+                {post.image_url && (
+                  <div className="rounded-lg overflow-hidden">
+                    <img
+                      src={post.image_url.startsWith("data:") ? post.image_url : post.image_url}
+                      alt="Post content"
+                      className="w-full h-64 object-cover"
+                    />
+                  </div>
+                )}
+
+                {/* Post Actions */}
+                <div className="flex items-center justify-between pt-2 border-t border-border">
+                  <div className="flex items-center gap-6">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleLike(post.id, post.isLiked || false)}
+                      className={`gap-2 ${post.isLiked ? "text-red-500 hover:text-red-600" : "text-muted-foreground"}`}
+                    >
+                      <Heart className={`h-4 w-4 ${post.isLiked ? "fill-current" : ""}`} />
+                      <span>{post.likes_count || 0}</span>
+                    </Button>
+
+                    <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+                      <MessageCircle className="h-4 w-4" />
+                      <span>{post.comments_count || 0}</span>
+                    </Button>
+
+                    <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+                      <Share2 className="h-4 w-4" />
+                      Share
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
     </div>
   )

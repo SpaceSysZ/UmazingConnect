@@ -4,12 +4,11 @@ import { useState } from "react"
 import { Navigation } from "@/components/navigation"
 import { HomeContent } from "@/components/home-content"
 import { ClubsContent } from "@/components/clubs-content"
-import { LostFoundContent } from "@/components/lost-found-content"
 import { useAuth } from "@/contexts/auth-context"
 import { ProfileCreation } from "@/components/profile-creation"
 import { LoginScreen } from "@/components/login-screen"
 
-type ActiveSection = "home" | "clubs" | "lost-found"
+type ActiveSection = "home" | "clubs"
 
 export function MainLayout() {
   const [activeSection, setActiveSection] = useState<ActiveSection>("home")
@@ -44,8 +43,6 @@ export function MainLayout() {
         return <HomeContent />
       case "clubs":
         return <ClubsContent />
-      case "lost-found":
-        return <LostFoundContent />
       default:
         return <HomeContent />
     }

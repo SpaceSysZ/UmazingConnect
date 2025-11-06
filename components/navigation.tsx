@@ -9,10 +9,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Home, Users, Search, Bell, MessageCircle, GraduationCap, Settings, LogOut } from "lucide-react"
+import { Home, Users, Bell, GraduationCap, Settings, LogOut } from "lucide-react"
 import { UserProfile } from "@/lib/auth-config"
 
-type ActiveSection = "home" | "clubs" | "lost-found"
+type ActiveSection = "home" | "clubs"
 
 interface NavigationProps {
   activeSection: ActiveSection
@@ -25,7 +25,6 @@ export function Navigation({ activeSection, onSectionChange, user, onLogout }: N
   const navItems = [
     { id: "home" as const, label: "Home", icon: Home },
     { id: "clubs" as const, label: "Clubs", icon: Users },
-    { id: "lost-found" as const, label: "Lost & Found", icon: Search },
   ]
 
   return (
@@ -66,11 +65,6 @@ export function Navigation({ activeSection, onSectionChange, user, onLogout }: N
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
               <span className="absolute -top-1 -right-1 h-3 w-3 bg-primary rounded-full text-xs"></span>
-            </Button>
-
-            {/* Messages */}
-            <Button variant="ghost" size="icon">
-              <MessageCircle className="h-5 w-5" />
             </Button>
 
             {/* User menu */}

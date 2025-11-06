@@ -1,19 +1,34 @@
-# Environment Configuration for SchoolConnect
+# Database Configuration
+DATABASE_URL="postgresql://postgres:password@localhost:5432/school_social_app"
 
-# Copy this file to .env.local and configure as needed
+# File Upload Configuration
+UPLOAD_DIR="./public/uploads"
+MAX_FILE_SIZE=5242880
 
-# ===== DEMO MODE (for testing without Azure) =====
-# Set to "true" to enable demo mode and test the UI without Azure authentication
-NEXT_PUBLIC_DEMO_MODE=true
+# Cloudinary Configuration (for production)
+CLOUDINARY_CLOUD_NAME="your-cloud-name"
+CLOUDINARY_API_KEY="your-api-key"
+CLOUDINARY_API_SECRET="your-api-secret"
 
-# ===== AZURE AUTHENTICATION (for production) =====
-# Get this from Azure Portal > App Registrations > Your App > Application (client) ID
-# NEXT_PUBLIC_AZURE_CLIENT_ID=your-azure-client-id-here
+# AWS S3 Configuration (alternative to Cloudinary)
+AWS_ACCESS_KEY_ID="your-access-key"
+AWS_SECRET_ACCESS_KEY="your-secret-key"
+AWS_REGION="us-east-1"
+AWS_S3_BUCKET="your-bucket-name"
 
-# Optional: Azure Tenant ID (if you want to restrict to specific tenant)
-# NEXT_PUBLIC_AZURE_TENANT_ID=your-tenant-id-here
+# Vercel Blob Storage (alternative)
+BLOB_READ_WRITE_TOKEN="your-blob-token"
 
-# ===== HOW TO USE =====
-# 1. For testing: Set NEXT_PUBLIC_DEMO_MODE=true (leave Azure ID empty)
-# 2. For production: Set NEXT_PUBLIC_DEMO_MODE=false and add your Azure Client ID
-# 3. Restart your development server after changing these values
+# Application Configuration
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-secret-key"
+
+# Email Configuration (for notifications)
+SMTP_HOST="smtp.gmail.com"
+SMTP_PORT=587
+SMTP_USER="your-email@gmail.com"
+SMTP_PASS="your-app-password"
+
+# Rate Limiting
+RATE_LIMIT_MAX=100
+RATE_LIMIT_WINDOW=900000

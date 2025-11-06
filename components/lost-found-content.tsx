@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Search, Plus, MapPin, Calendar, Phone, Mail, Package, Smartphone, Book, Shirt, Key } from "lucide-react"
+import { Search, Plus, MapPin, Calendar, Phone, Mail, Package, Smartphone, Book, Shirt, Key, Upload, X, Image as ImageIcon } from "lucide-react"
 
 interface LostFoundItem {
   id: string
@@ -168,7 +168,74 @@ export function LostFoundContent() {
     contactPhone: "",
   })
 
-  const handleSubmitItem = () => {
+  // Image upload state
+  const [selectedImage, setSelectedImage] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+
+  // Load items from API
+  const loadItems = async () => {
+    try {
+      const response = await fetch('/api/lost-found')
+      if (response.ok) {
+        const result = await response.json()
+        setItems(result.data)
+      } else {
+        console.error('Failed to load items')
+      }
+    } catch (error) {
+      console.error('Error loading items:', error)
+    }
+  }
+
+  // Load items on component mount
+  useEffect(() => {
+    loadItems()
+  }, [])
+
+  // Handle image selection
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file')
+        return
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size should be less than 5MB')
+        return
+      }
+
+      setSelectedImage(file)
+      
+      // Create preview URL
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  // Remove selected image
+  const removeImage = () => {
+    setSelectedImage(null)
+    setImagePreview(null)
+  }
+
+  // Convert image to base64 for storage (temporary solution)
+  const convertImageToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+  }
+
+  const handleSubmitItem = async () => {
     if (
       newItem.title &&
       newItem.description &&
@@ -177,28 +244,73 @@ export function LostFoundContent() {
       newItem.contactName &&
       newItem.contactEmail
     ) {
-      const item: LostFoundItem = {
-        id: Date.now().toString(),
-        ...newItem,
-        dateReported: "Just now",
-        status: "active",
-        reporter: {
-          name: newItem.contactName,
-          avatar: "/placeholder.svg?key=user",
-        },
+      try {
+        let imageUrl = ""
+        
+        // Handle image upload
+        if (selectedImage) {
+          try {
+            // Upload image to server
+            const formData = new FormData()
+            formData.append('file', selectedImage)
+            
+            const uploadResponse = await fetch('/api/upload', {
+              method: 'POST',
+              body: formData,
+            })
+            
+            if (uploadResponse.ok) {
+              const uploadData = await uploadResponse.json()
+              imageUrl = uploadData.data.url
+            } else {
+              // Fallback to base64 if upload fails
+              imageUrl = await convertImageToBase64(selectedImage)
+            }
+          } catch (error) {
+            console.error('Error uploading image:', error)
+            // Fallback to base64
+            imageUrl = await convertImageToBase64(selectedImage)
+          }
+        }
+
+        // Submit item to API
+        const response = await fetch('/api/lost-found', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...newItem,
+            image: imageUrl || null,
+          }),
+        })
+
+        if (response.ok) {
+          const result = await response.json()
+          setItems([result.data, ...items])
+          
+          // Reset form
+          setNewItem({
+            title: "",
+            description: "",
+            category: "",
+            type: "lost",
+            location: "",
+            contactName: "",
+            contactEmail: "",
+            contactPhone: "",
+          })
+          setSelectedImage(null)
+          setImagePreview(null)
+          setIsDialogOpen(false)
+        } else {
+          const error = await response.json()
+          alert(`Error submitting item: ${error.error}`)
+        }
+      } catch (error) {
+        console.error('Error submitting item:', error)
+        alert('Error submitting item. Please try again.')
       }
-      setItems([item, ...items])
-      setNewItem({
-        title: "",
-        description: "",
-        category: "",
-        type: "lost",
-        location: "",
-        contactName: "",
-        contactEmail: "",
-        contactPhone: "",
-      })
-      setIsDialogOpen(false)
     }
   }
 
@@ -247,7 +359,7 @@ export function LostFoundContent() {
               Report Lost/Found Item
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Report an Item</DialogTitle>
               <DialogDescription>Help others by reporting a lost or found item</DialogDescription>
@@ -347,6 +459,54 @@ export function LostFoundContent() {
                 />
               </div>
 
+              {/* Image Upload Section */}
+              <div className="space-y-2">
+                <Label htmlFor="image">Item Photo (Optional)</Label>
+                <div className="space-y-3">
+                  {!imagePreview ? (
+                    <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center hover:border-muted-foreground/50 transition-colors">
+                      <input
+                        type="file"
+                        id="image"
+                        accept="image/*"
+                        onChange={handleImageSelect}
+                        className="hidden"
+                      />
+                      <label htmlFor="image" className="cursor-pointer">
+                        <div className="flex flex-col items-center gap-2">
+                          <Upload className="h-8 w-8 text-muted-foreground" />
+                          <div className="text-sm text-muted-foreground">
+                            <span className="font-medium text-primary">Click to upload</span> or drag and drop
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            PNG, JPG, GIF up to 5MB
+                          </div>
+                        </div>
+                      </label>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <div className="aspect-video rounded-lg overflow-hidden border">
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2"
+                        onClick={removeImage}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <Button onClick={handleSubmitItem} className="w-full">
                 Submit Report
               </Button>
@@ -402,7 +562,7 @@ export function LostFoundContent() {
                   {item.image && (
                     <div className="aspect-video relative overflow-hidden">
                       <img
-                        src={item.image || "/placeholder.svg"}
+                        src={item.image.startsWith('data:') ? item.image : item.image || "/placeholder.svg"}
                         alt={item.title}
                         className="w-full h-full object-cover"
                       />
