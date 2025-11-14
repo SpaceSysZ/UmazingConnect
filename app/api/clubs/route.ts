@@ -50,7 +50,8 @@ export async function GET(request: NextRequest) {
     const result = await pool.query(query, params)
 
     // If userId is provided, also check membership status
-    if (userId) {
+    // Skip for demo user (not a valid UUID)
+    if (userId && userId !== 'demo-user-123') {
       const membershipsQuery = `
         SELECT club_id, role FROM club_members WHERE user_id = $1
       `

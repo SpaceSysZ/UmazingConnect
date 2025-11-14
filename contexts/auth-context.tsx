@@ -5,6 +5,8 @@ import { PublicClientApplication, AccountInfo, AuthenticationResult } from "@azu
 import { msalConfig, loginRequest, isBerkeleyPrepEmail, UserProfile } from "@/lib/auth-config"
 import { DEMO_MODE, DEMO_USER } from "@/lib/demo-mode"
 import { debugMSAL } from "@/lib/debug-msal"
+import { setupCryptoPolyfill, isSecureContext, getSecurityWarning } from "@/lib/crypto-polyfill"
+import { autoFixStuckInteraction } from "@/lib/clear-msal-cache"
 // Removed server-side imports to prevent bundling issues
 
 interface AuthContextType {
@@ -20,7 +22,30 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-// Initialize MSAL
+// Setup crypto polyfill BEFORE initializing MSAL
+if (typeof window !== 'undefined') {
+  setupCryptoPolyfill()
+  const warning = getSecurityWarning()
+  if (warning) {
+    console.warn(warning)
+  }
+  
+  // AGGRESSIVE: Always clear MSAL cache on mobile HTTP to prevent stuck states
+  if (!isSecureContext()) {
+    console.log('🔧 Non-secure context detected - clearing MSAL cache to prevent stuck states')
+    try {
+      sessionStorage.clear()
+      localStorage.removeItem('msal.interaction.status')
+    } catch (e) {
+      console.warn('Could not clear storage:', e)
+    }
+  }
+  
+  // Auto-fix any stuck interaction state from previous sessions
+  autoFixStuckInteraction()
+}
+
+// Initialize MSAL (after polyfill is set up)
 const msalInstance = new PublicClientApplication(msalConfig)
 
 // Use API calls instead of direct service imports
@@ -60,15 +85,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Initialize MSAL and check authentication status
     const initializeAuth = async () => {
       try {
+        // Initialize MSAL first
         await msalInstance.initialize()
         
-        // Check if user is already signed in
+        // Handle any redirect responses first (from OAuth callback)
+        try {
+          const response = await msalInstance.handleRedirectPromise()
+          if (response) {
+            console.log("Handled redirect response")
+            setIsInteractionInProgress(true)
+            await handleAuthSuccess(response.account)
+            setIsInteractionInProgress(false)
+            setIsInitialized(true)
+            return
+          }
+        } catch (redirectError) {
+          console.error("Error handling redirect:", redirectError)
+        }
+        
+        // Check if user is already signed in (only if no interaction in progress)
         const accounts = msalInstance.getAllAccounts()
-        if (accounts.length > 0) {
+        if (accounts.length > 0 && !isInteractionInProgress) {
           console.log("Found existing account, attempting silent authentication")
           setIsInteractionInProgress(true)
-          await handleAuthSuccess(accounts[0])
-          setIsInteractionInProgress(false)
+          try {
+            await handleAuthSuccess(accounts[0])
+          } catch (error: any) {
+            // Only log non-expected errors
+            if (error?.errorCode !== 'no_tokens_found' && 
+                !error?.message?.includes('no token request found in cache')) {
+              console.error("Silent auth failed:", error)
+            } else {
+              console.log("No cached token - user will need to login")
+            }
+          } finally {
+            setIsInteractionInProgress(false)
+          }
         } else {
           setIsLoading(false)
         }
@@ -86,11 +138,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const handleAuthSuccess = async (account: AccountInfo) => {
     try {
+      // Check if interaction is already in progress
+      if (isInteractionInProgress) {
+        console.warn("Skipping auth - interaction already in progress")
+        return
+      }
+
       // Get user info from Microsoft Graph
-      const response = await msalInstance.acquireTokenSilent({
-        ...loginRequest,
-        account: account,
-      })
+      let response: AuthenticationResult | null = null
+      
+      try {
+        response = await msalInstance.acquireTokenSilent({
+          ...loginRequest,
+          account: account,
+        })
+      } catch (silentError: any) {
+        console.warn("Silent token acquisition failed:", silentError?.errorCode)
+        
+        // Handle specific errors
+        if (silentError?.errorCode === 'no_tokens_found' || 
+            silentError?.errorCode === 'no_account_error' ||
+            silentError?.errorMessage?.includes('no token request found in cache')) {
+          console.log("No cached token found - user needs to login interactively")
+          setIsLoading(false)
+          return
+        }
+        
+        // For other errors, try interactive login
+        console.log("Attempting interactive token acquisition...")
+        try {
+          response = await msalInstance.acquireTokenPopup(loginRequest)
+        } catch (interactiveError) {
+          console.error("Interactive token acquisition failed:", interactiveError)
+          setIsLoading(false)
+          return
+        }
+      }
 
       if (response) {
         try {
@@ -176,14 +259,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Error handling auth success:", error)
       
       // Handle specific MSAL errors
-      if (error instanceof Error && error.message.includes('interaction_in_progress')) {
-        console.log("Interaction already in progress, will retry...")
-        // Don't show alert for this error, just log it
-      } else {
-        alert("Authentication failed. Please try again or contact support.")
+      if (error instanceof Error) {
+        if (error.message.includes('interaction_in_progress')) {
+          console.warn("⚠️ Interaction already in progress - this is normal during initialization")
+          // Don't show alert for this error, just log it
+          // This happens when MSAL is still processing a previous auth attempt
+        } else if (error.message.includes('user_cancelled')) {
+          console.log("User cancelled authentication")
+          // Don't show alert for user cancellation
+        } else {
+          console.error("Authentication error:", error.message)
+          alert("Authentication failed. Please try again or contact support.")
+        }
       }
     } finally {
       setIsLoading(false)
+      setIsInteractionInProgress(false)
     }
   }
 
@@ -226,7 +317,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // Prevent multiple simultaneous login attempts
       if (isInteractionInProgress) {
-        console.log("Login interaction already in progress, skipping...")
+        console.warn("Login interaction already in progress, please wait...")
+        return
+      }
+
+      // Check if MSAL is initialized
+      if (!isInitialized) {
+        console.warn("MSAL not initialized yet, please wait...")
         return
       }
 

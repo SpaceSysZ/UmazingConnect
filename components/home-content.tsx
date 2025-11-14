@@ -28,66 +28,53 @@ export function HomeContent() {
   const { user } = useAuth()
   const [posts, setPosts] = useState<ClubPost[]>([])
   const [loading, setLoading] = useState(true)
-  const [clubNames, setClubNames] = useState<Map<string, { name: string; avatar: string | null }>>(new Map())
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
 
-  // Load all posts from all clubs
-  const loadPosts = async () => {
+  // Load posts with pagination
+  const loadPosts = async (pageNum: number = 1, append: boolean = false) => {
     try {
-      setLoading(true)
+      if (pageNum === 1) {
+        setLoading(true)
+      } else {
+        setLoadingMore(true)
+      }
+
+      const url = user?.id
+        ? `/api/feed?page=${pageNum}&limit=20&userId=${user.id}`
+        : `/api/feed?page=${pageNum}&limit=20`
+
+      const response = await fetch(url)
+      if (!response.ok) return
+
+      const result = await response.json()
       
-      // First, get all clubs to map IDs to names
-      const clubsResponse = await fetch("/api/clubs")
-      if (clubsResponse.ok) {
-        const clubsData = await clubsResponse.json()
-        const clubMap = new Map()
-        clubsData.data.forEach((club: any) => {
-          clubMap.set(club.id, {
-            name: club.name,
-            avatar: club.image_url,
-          })
-        })
-        setClubNames(clubMap)
+      if (append) {
+        setPosts((prev) => [...prev, ...result.data])
+      } else {
+        setPosts(result.data)
       }
 
-      // Get all clubs and their posts
-      const clubsRes = await fetch("/api/clubs")
-      if (!clubsRes.ok) return
-
-      const clubsData = await clubsRes.json()
-      const allPosts: ClubPost[] = []
-
-      // Fetch posts for each club
-      for (const club of clubsData.data) {
-        const postsUrl = user?.id
-          ? `/api/clubs/${club.id}/posts?userId=${user.id}`
-          : `/api/clubs/${club.id}/posts`
-        
-        const postsRes = await fetch(postsUrl)
-        if (postsRes.ok) {
-          const postsData = await postsRes.json()
-          const clubPosts = postsData.data.map((post: any) => ({
-            ...post,
-            club_name: club.name,
-            club_avatar: club.image_url,
-            club_id: club.id,
-          }))
-          allPosts.push(...clubPosts)
-        }
-      }
-
-      // Sort by date (newest first)
-      allPosts.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-
-      setPosts(allPosts)
+      setHasMore(result.pagination.hasMore)
+      setPage(pageNum)
     } catch (error) {
       console.error("Error loading posts:", error)
     } finally {
       setLoading(false)
+      setLoadingMore(false)
+    }
+  }
+
+  // Load more posts
+  const loadMore = () => {
+    if (!loadingMore && hasMore) {
+      loadPosts(page + 1, true)
     }
   }
 
   useEffect(() => {
-    loadPosts()
+    loadPosts(1, false)
   }, [user?.id])
 
   const handleLike = async (postId: string, isLiked: boolean) => {
@@ -158,7 +145,7 @@ export function HomeContent() {
 
       {/* Posts Feed */}
       <div className="space-y-3 sm:space-y-4">
-        {posts.length === 0 ? (
+        {posts.length === 0 && !loading ? (
           <Card>
             <CardContent className="py-8 sm:py-12 text-center">
               <Users className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 sm:mb-4 text-muted-foreground opacity-50" />
@@ -167,7 +154,8 @@ export function HomeContent() {
             </CardContent>
           </Card>
         ) : (
-          posts.map((post) => (
+          <>
+            {posts.map((post) => (
             <Card key={post.id} className="overflow-hidden">
               <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
                 <div className="flex items-start justify-between">
@@ -239,7 +227,35 @@ export function HomeContent() {
                 </div>
               </CardContent>
             </Card>
-          ))
+            ))}
+
+            {/* Load More Button */}
+            {hasMore && (
+              <div className="flex justify-center pt-4">
+                <Button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Loading more posts...
+                    </>
+                  ) : (
+                    'Load More Posts'
+                  )}
+                </Button>
+              </div>
+            )}
+
+            {!hasMore && posts.length > 0 && (
+              <div className="text-center py-4 text-sm text-muted-foreground">
+                You've reached the end of the feed
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

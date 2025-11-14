@@ -1,19 +1,43 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { GraduationCap, Users, BookOpen, MessageCircle } from "lucide-react"
+import { GraduationCap, Users, BookOpen, MessageCircle, RefreshCw } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 
 export function LoginScreen() {
   const { login, isLoading } = useAuth()
+  const [showReset, setShowReset] = useState(false)
 
   const handleMicrosoftLogin = async () => {
     try {
       await login()
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login failed:", error)
-      alert("Login failed. Please try again.")
+      
+      // Show reset button if interaction_in_progress error
+      if (error?.message?.includes('interaction_in_progress') || 
+          error?.errorCode === 'interaction_in_progress') {
+        setShowReset(true)
+      } else {
+        alert("Login failed. Please try again.")
+      }
+    }
+  }
+
+  const handleReset = () => {
+    try {
+      // Clear all MSAL cache
+      sessionStorage.clear()
+      localStorage.clear()
+      console.log('✅ Cache cleared')
+      
+      // Reload page
+      window.location.reload()
+    } catch (error) {
+      console.error('Failed to reset:', error)
+      alert('Please close and reopen your browser')
     }
   }
 
@@ -87,6 +111,23 @@ export function LoginScreen() {
                 </svg>
                 {isLoading ? "Signing in..." : "Continue with Microsoft"}
               </Button>
+
+              {/* Reset button for stuck auth state */}
+              {showReset && (
+                <div className="space-y-2">
+                  <div className="text-center text-xs sm:text-sm text-yellow-600 bg-yellow-50 p-2 rounded">
+                    Login stuck? Try resetting the authentication state.
+                  </div>
+                  <Button 
+                    onClick={handleReset}
+                    variant="outline"
+                    className="w-full h-9 sm:h-10 text-sm"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Reset & Try Again
+                  </Button>
+                </div>
+              )}
 
               <div className="text-center">
                 <p className="text-xs sm:text-sm text-muted-foreground px-2">

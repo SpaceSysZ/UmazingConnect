@@ -6,7 +6,9 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "mobile": "node scripts/show-mobile-url.js && npm run dev",
+    "mobile-url": "node scripts/show-mobile-url.js"
   },
   "dependencies": {
     "@azure/msal-browser": "^4.21.1",

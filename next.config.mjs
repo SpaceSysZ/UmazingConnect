@@ -9,6 +9,12 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // Allow mobile device testing from local network
+  // This suppresses the cross-origin warning when accessing from your phone
+  experimental: {
+    // Use wildcard to allow any local network IP
+    allowedDevOrigins: ['*'],
+  },
 }
 
 export default nextConfig

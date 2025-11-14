@@ -1,5 +1,11 @@
 import { Configuration, PopupRequest } from "@azure/msal-browser"
 
+// Check if we're in a secure context (HTTPS or localhost)
+const isSecureContext = typeof window !== "undefined" && 
+  (window.location.protocol === "https:" || 
+   window.location.hostname === "localhost" ||
+   window.location.hostname === "127.0.0.1")
+
 // MSAL configuration
 export const msalConfig: Configuration = {
   auth: {
@@ -9,7 +15,14 @@ export const msalConfig: Configuration = {
   },
   cache: {
     cacheLocation: "sessionStorage", // This configures where your cache will be stored
-    storeAuthStateInCookie: false, // Set this to "true" if you are having issues on IE11 or Edge
+    storeAuthStateInCookie: true, // Enable for better compatibility with mobile browsers
+  },
+  system: {
+    // Disable crypto check for non-secure contexts (mobile testing over HTTP)
+    allowNativeBroker: false,
+    loggerOptions: {
+      logLevel: isSecureContext ? 3 : 1, // Less verbose in non-secure contexts
+    },
   },
 }
 
