@@ -24,27 +24,16 @@ export async function GET(
 
     const result = await pool.query(query, [clubId])
 
-    // If userId provided, check which posts user liked
-    if (userId) {
-      const likesQuery = `
-        SELECT post_id FROM post_likes WHERE user_id = $1 AND post_id = ANY($2::uuid[])
-      `
-      const postIds = result.rows.map((p: any) => p.id)
-      
-      if (postIds.length > 0) {
-        const likesResult = await pool.query(likesQuery, [userId, postIds])
-        const likedPostIds = new Set(likesResult.rows.map((r: any) => r.post_id))
-
-        result.rows.forEach((post: any) => {
-          post.isLiked = likedPostIds.has(post.id)
-        })
-      }
-    }
+    // Add isLiked flag (set to false since post_likes table doesn't exist yet)
+    const posts = result.rows.map((post: any) => ({
+      ...post,
+      isLiked: false,
+    }))
 
     return NextResponse.json({
       success: true,
-      data: result.rows,
-      count: result.rows.length,
+      data: posts,
+      count: posts.length,
     })
   } catch (error) {
     console.error('Error fetching club posts:', error)

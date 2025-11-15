@@ -55,23 +55,11 @@ export async function GET(request: NextRequest) {
     const totalPosts = parseInt(countResult.rows[0].total)
     const totalPages = Math.ceil(totalPosts / limit)
 
-    // If userId provided, check which posts user has liked
-    // Skip for demo user (not a valid UUID)
-    let posts = postsResult.rows
-    if (userId && posts.length > 0 && userId !== 'demo-user-123') {
-      const postIds = posts.map((p: any) => p.id)
-      const likesQuery = `
-        SELECT post_id FROM post_likes 
-        WHERE user_id = $1 AND post_id = ANY($2::uuid[])
-      `
-      const likesResult = await pool.query(likesQuery, [userId, postIds])
-      const likedPostIds = new Set(likesResult.rows.map((r: any) => r.post_id))
-
-      posts = posts.map((post: any) => ({
-        ...post,
-        isLiked: likedPostIds.has(post.id),
-      }))
-    }
+    // Add isLiked flag (set to false since post_likes table doesn't exist yet)
+    const posts = postsResult.rows.map((post: any) => ({
+      ...post,
+      isLiked: false,
+    }))
 
     return NextResponse.json({
       success: true,
