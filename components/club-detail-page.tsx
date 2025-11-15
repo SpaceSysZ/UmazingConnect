@@ -22,6 +22,7 @@ import {
   Trophy,
   Heart,
   Code,
+  Trash2,
 } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { ManageLeadershipDialog } from "./manage-leadership-dialog"
@@ -303,6 +304,14 @@ export function ClubDetailPage({ clubId }: { clubId: string }) {
                     const isLeadership = club?.memberRole && ['president', 'vice_president', 'officer'].includes(club.memberRole)
                     const canDelete = isLeadership
                     
+                    // Debug logging
+                    console.log('Post delete check:', {
+                      postId: post.id,
+                      memberRole: club?.memberRole,
+                      isLeadership,
+                      canDelete
+                    })
+                    
                     return (
                       <div key={post.id} className="border rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3">
                         <div className="flex items-center gap-2 sm:gap-3">
@@ -324,11 +333,12 @@ export function ClubDetailPage({ clubId }: { clubId: string }) {
                           {canDelete && (
                             <Button
                               variant="ghost"
-                              size="sm"
+                              size="icon"
                               onClick={() => handleDeletePost(post.id)}
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8"
+                              title="Delete post"
                             >
-                              Delete
+                              <Trash2 className="h-4 w-4" />
                             </Button>
                           )}
                         </div>
