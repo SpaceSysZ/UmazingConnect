@@ -156,6 +156,31 @@ export function ClubDetailPage({ clubId }: { clubId: string }) {
     }
   }, [user?.id, club, clubId, loadClubDetails])
 
+  const handleDeletePost = useCallback(async (postId: string) => {
+    if (!user?.id) return
+    
+    if (!confirm("Are you sure you want to delete this post?")) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/posts/${postId}?userId=${user.id}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        // Remove post from local state
+        setPosts(posts.filter(p => p.id !== postId))
+      } else {
+        const data = await response.json()
+        alert(data.error || "Failed to delete post")
+      }
+    } catch (error) {
+      console.error("Error deleting post:", error)
+      alert("Failed to delete post. Please try again.")
+    }
+  }, [user?.id, posts])
+
   if (loading) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-8 flex items-center justify-center min-h-screen">
@@ -274,35 +299,50 @@ export function ClubDetailPage({ clubId }: { clubId: string }) {
             <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
               {posts.length > 0 ? (
                 <div className="space-y-3 sm:space-y-4">
-                  {posts.map((post) => (
-                    <div key={post.id} className="border rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3">
-                      <div className="flex items-center gap-2 sm:gap-3">
-                        <Avatar className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0">
-                          <AvatarImage src={post.author_avatar || "/placeholder.svg"} />
-                          <AvatarFallback className="text-xs">
-                            {post.author_name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-xs sm:text-sm truncate">{post.author_name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(post.created_at).toLocaleDateString()}
-                          </p>
+                  {posts.map((post) => {
+                    const isLeadership = club?.memberRole && ['president', 'vice_president', 'officer'].includes(club.memberRole)
+                    const canDelete = isLeadership
+                    
+                    return (
+                      <div key={post.id} className="border rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <Avatar className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0">
+                            <AvatarImage src={post.author_avatar || "/placeholder.svg"} />
+                            <AvatarFallback className="text-xs">
+                              {post.author_name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-xs sm:text-sm truncate">{post.author_name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(post.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                          {canDelete && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeletePost(post.id)}
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              Delete
+                            </Button>
+                          )}
                         </div>
+                        <p className="text-xs sm:text-sm">{post.content}</p>
+                        {post.image_url && (
+                          <img
+                            src={post.image_url}
+                            alt="Post"
+                            className="rounded-lg w-full max-h-48 sm:max-h-64 object-cover"
+                          />
+                        )}
                       </div>
-                      <p className="text-xs sm:text-sm">{post.content}</p>
-                      {post.image_url && (
-                        <img
-                          src={post.image_url}
-                          alt="Post"
-                          className="rounded-lg w-full max-h-48 sm:max-h-64 object-cover"
-                        />
-                      )}
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               ) : (
                 <p className="text-center text-sm sm:text-base text-muted-foreground py-6 sm:py-8">No posts yet</p>
