@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { supabase } from '@/lib/supabase'
 
-// POST /api/upload - Handle image uploads
-// NOTE: File uploads disabled on Vercel (read-only filesystem)
-// TODO: Implement cloud storage (Cloudinary, Vercel Blob, or AWS S3)
+// POST /api/upload - Handle image uploads using Supabase Storage
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
@@ -31,19 +30,45 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // TEMPORARY: Return placeholder until cloud storage is set up
-    // In production, you would upload to Cloudinary, Vercel Blob, or S3 here
-    const placeholderUrl = `/placeholder.svg?key=upload-${Date.now()}`
+    // Generate unique filename
+    const timestamp = Date.now()
+    const fileExtension = file.name.split('.').pop()
+    const filename = `club-post-${timestamp}.${fileExtension}`
+
+    // Convert file to buffer
+    const bytes = await file.arrayBuffer()
+    const buffer = Buffer.from(bytes)
+
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from('club-images')
+      .upload(filename, buffer, {
+        contentType: file.type,
+        cacheControl: '3600',
+        upsert: false
+      })
+
+    if (error) {
+      console.error('Supabase upload error:', error)
+      return NextResponse.json(
+        { success: false, error: 'Failed to upload to storage' },
+        { status: 500 }
+      )
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('club-images')
+      .getPublicUrl(filename)
 
     return NextResponse.json({
       success: true,
       data: {
-        filename: file.name,
-        url: placeholderUrl,
+        filename,
+        url: publicUrl,
         size: file.size,
         type: file.type
-      },
-      message: 'File upload temporarily disabled. Using placeholder image.'
+      }
     })
 
   } catch (error) {
