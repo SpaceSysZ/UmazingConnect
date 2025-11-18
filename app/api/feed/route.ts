@@ -24,14 +24,14 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Single optimized query to get all posts with club info
+    // Single optimized query to get all posts with club info and like counts
     const postsQuery = `
       SELECT 
         p.id,
         p.club_id,
         p.content,
         p.image_url,
-        0 as likes_count,
+        COUNT(DISTINCT pl.id) as likes_count,
         0 as comments_count,
         p.created_at,
         p.user_id as author_id,
@@ -43,6 +43,8 @@ export async function GET(request: NextRequest) {
       FROM posts p
       JOIN users u ON p.user_id = u.id
       JOIN clubs c ON p.club_id = c.id
+      LEFT JOIN post_likes pl ON p.id = pl.post_id
+      GROUP BY p.id, u.id, u.name, u.avatar_url, u.email, c.name, c.image_url
       ORDER BY p.created_at DESC
       LIMIT $1 OFFSET $2
     `
@@ -55,11 +57,27 @@ export async function GET(request: NextRequest) {
     const totalPosts = parseInt(countResult.rows[0].total)
     const totalPages = Math.ceil(totalPosts / limit)
 
-    // Add isLiked flag (set to false since post_likes table doesn't exist yet)
-    const posts = postsResult.rows.map((post: any) => ({
-      ...post,
-      isLiked: false,
-    }))
+    // Check which posts user has liked
+    let posts = postsResult.rows
+    if (userId && posts.length > 0 && userId !== 'demo-user-123') {
+      const postIds = posts.map((p: any) => p.id)
+      const likesQuery = `
+        SELECT post_id FROM post_likes 
+        WHERE user_id = $1 AND post_id = ANY($2::uuid[])
+      `
+      const likesResult = await pool.query(likesQuery, [userId, postIds])
+      const likedPostIds = new Set(likesResult.rows.map((r: any) => r.post_id))
+
+      posts = posts.map((post: any) => ({
+        ...post,
+        isLiked: likedPostIds.has(post.id),
+      }))
+    } else {
+      posts = posts.map((post: any) => ({
+        ...post,
+        isLiked: false,
+      }))
+    }
 
     return NextResponse.json({
       success: true,

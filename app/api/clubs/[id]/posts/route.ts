@@ -15,20 +15,39 @@ export async function GET(
         p.*,
         u.name as author_name,
         u.avatar_url as author_avatar,
-        u.email as author_email
+        u.email as author_email,
+        COUNT(DISTINCT pl.id) as likes_count
       FROM posts p
       JOIN users u ON p.user_id = u.id
+      LEFT JOIN post_likes pl ON p.id = pl.post_id
       WHERE p.club_id = $1
+      GROUP BY p.id, u.id, u.name, u.avatar_url, u.email
       ORDER BY p.created_at DESC
     `
 
     const result = await pool.query(query, [clubId])
 
-    // Add isLiked flag (set to false since post_likes table doesn't exist yet)
-    const posts = result.rows.map((post: any) => ({
-      ...post,
-      isLiked: false,
-    }))
+    // Check which posts user has liked
+    let posts = result.rows
+    if (userId && posts.length > 0 && userId !== 'demo-user-123') {
+      const postIds = posts.map((p: any) => p.id)
+      const likesQuery = `
+        SELECT post_id FROM post_likes 
+        WHERE user_id = $1 AND post_id = ANY($2::uuid[])
+      `
+      const likesResult = await pool.query(likesQuery, [userId, postIds])
+      const likedPostIds = new Set(likesResult.rows.map((r: any) => r.post_id))
+
+      posts = posts.map((post: any) => ({
+        ...post,
+        isLiked: likedPostIds.has(post.id),
+      }))
+    } else {
+      posts = posts.map((post: any) => ({
+        ...post,
+        isLiked: false,
+      }))
+    }
 
     return NextResponse.json({
       success: true,
