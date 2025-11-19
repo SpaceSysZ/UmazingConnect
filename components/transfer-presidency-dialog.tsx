@@ -1,0 +1,218 @@
+"use client"
+
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Crown, AlertTriangle } from "lucide-react"
+
+interface Member {
+  id: string
+  user_id: string
+  name: string
+  role: string
+}
+
+interface TransferPresidencyDialogProps {
+  clubId: string
+  clubName: string
+  members: Member[]
+  currentUserId: string
+  onSuccess: () => void
+}
+
+export function TransferPresidencyDialog({
+  clubId,
+  clubName,
+  members,
+  currentUserId,
+  onSuccess,
+}: TransferPresidencyDialogProps) {
+  const [open, setOpen] = useState(false)
+  const [selectedMember, setSelectedMember] = useState<string>("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // Filter out current user and get eligible members
+  const eligibleMembers = members.filter(m => m.user_id !== currentUserId)
+
+  const handleTransfer = async () => {
+    if (!selectedMember) {
+      setError("Please select a new president")
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`/api/clubs/${clubId}/leave-presidency`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: currentUserId,
+          newPresidentId: selectedMember,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setOpen(false)
+        onSuccess()
+      } else {
+        setError(data.error || "Failed to transfer presidency")
+      }
+    } catch (err) {
+      setError("An error occurred. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleUnclaimAndLeave = async () => {
+    if (!confirm(
+      `Are you sure you want to unclaim ${clubName} and leave? The club will become available for others to claim.`
+    )) {
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`/api/clubs/${clubId}/leave-presidency`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: currentUserId,
+          newPresidentId: null,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setOpen(false)
+        onSuccess()
+      } else {
+        setError(data.error || "Failed to leave club")
+      }
+    } catch (err) {
+      setError("An error occurred. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-2">
+          <Crown className="h-4 w-4" />
+          Leave Presidency
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>Leave Presidency</DialogTitle>
+          <DialogDescription>
+            Choose how you want to leave your role as president of {clubName}.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-4">
+          {error && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {eligibleMembers.length > 0 ? (
+            <>
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm">Option 1: Transfer Presidency</h4>
+                <p className="text-sm text-muted-foreground">
+                  Select a new president from current club members. You will become a regular member.
+                </p>
+                <Select value={selectedMember} onValueChange={setSelectedMember}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select new president" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {eligibleMembers.map((member) => (
+                      <SelectItem key={member.user_id} value={member.user_id}>
+                        {member.name} {member.role !== 'member' && `(${member.role})`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  onClick={handleTransfer}
+                  disabled={loading || !selectedMember}
+                  className="w-full"
+                >
+                  {loading ? "Transferring..." : "Transfer Presidency"}
+                </Button>
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">Or</span>
+                </div>
+              </div>
+            </>
+          ) : (
+            <Alert>
+              <AlertDescription>
+                There are no other members to transfer presidency to. You can only unclaim the club.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <div className="space-y-2">
+            <h4 className="font-medium text-sm">
+              {eligibleMembers.length > 0 ? "Option 2: " : ""}Unclaim & Leave Club
+            </h4>
+            <p className="text-sm text-muted-foreground">
+              Unclaim the club and leave. The club will become available for others to claim.
+            </p>
+            <Button
+              onClick={handleUnclaimAndLeave}
+              disabled={loading}
+              variant="destructive"
+              className="w-full"
+            >
+              {loading ? "Leaving..." : "Unclaim & Leave Club"}
+            </Button>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
+            Cancel
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}

@@ -28,6 +28,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { ManageLeadershipDialog } from "./manage-leadership-dialog"
 import { EditClubDialog } from "./edit-club-dialog"
 import { ManageTagsDialog } from "./manage-tags-dialog"
+import { TransferPresidencyDialog } from "./transfer-presidency-dialog"
 
 interface ClubMember {
   id: string
@@ -400,12 +401,21 @@ export function ClubDetailPage({ clubId }: { clubId: string }) {
                         onUpdateSuccess={loadClubDetails}
                       />
                       {club.memberRole === "president" && (
-                        <ManageLeadershipDialog
-                          clubId={club.id}
-                          clubName={club.name}
-                          currentUserId={user?.id || ""}
-                          isPresident={true}
-                        />
+                        <>
+                          <ManageLeadershipDialog
+                            clubId={club.id}
+                            clubName={club.name}
+                            currentUserId={user?.id || ""}
+                            isPresident={true}
+                          />
+                          <TransferPresidencyDialog
+                            clubId={club.id}
+                            clubName={club.name}
+                            members={members}
+                            currentUserId={user?.id || ""}
+                            onSuccess={() => router.push("/")}
+                          />
+                        </>
                       )}
                     </>
                   )}
