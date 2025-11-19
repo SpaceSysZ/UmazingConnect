@@ -134,13 +134,26 @@ export function ClubDetailPage({ clubId }: { clubId: string }) {
   const handleJoinLeave = useCallback(async () => {
     if (!user?.id || !club) return
 
+    // Prevent presidents from leaving via this button
+    if (club.memberRole === "president") {
+      alert("As president, please use the 'Leave Presidency' button to transfer leadership or unclaim the club.")
+      return
+    }
+
     try {
       if (club.is_joined) {
+        // Confirm before leaving
+        if (!confirm(`Are you sure you want to leave ${club.name}?`)) {
+          return
+        }
+
         const response = await fetch(`/api/clubs/${clubId}/join?userId=${user.id}`, {
           method: "DELETE",
         })
         if (response.ok) {
           await loadClubDetails()
+        } else {
+          alert("Failed to leave club. Please try again.")
         }
       } else {
         const response = await fetch(`/api/clubs/${clubId}/join`, {
@@ -150,6 +163,8 @@ export function ClubDetailPage({ clubId }: { clubId: string }) {
         })
         if (response.ok) {
           await loadClubDetails()
+        } else {
+          alert("Failed to join club. Please try again.")
         }
       }
     } catch (error) {
@@ -369,18 +384,19 @@ export function ClubDetailPage({ clubId }: { clubId: string }) {
             <CardContent className="pt-4 sm:pt-6 space-y-2 sm:space-y-3 px-3 sm:px-6 pb-3 sm:pb-6">
               {club.is_claimed ? (
                 <>
-                  {user?.id && (
+                  {user?.id && club.memberRole !== "president" && (
                     <Button
                       onClick={handleJoinLeave}
-                      variant={club.is_joined ? "outline" : "default"}
-                      className={
-                        club.is_joined
-                          ? "w-full border-green-500 text-green-600 hover:bg-green-50 h-9 sm:h-10 text-sm"
-                          : "w-full h-9 sm:h-10 text-sm"
-                      }
+                      variant={club.is_joined ? "destructive" : "default"}
+                      className="w-full h-9 sm:h-10 text-sm"
                     >
-                      {club.is_joined ? "Joined" : "Join Club"}
+                      {club.is_joined ? "Leave Club" : "Join Club"}
                     </Button>
+                  )}
+                  {user?.id && club.memberRole === "president" && (
+                    <div className="text-xs text-muted-foreground text-center py-2">
+                      Use "Leave Presidency" below to leave this club
+                    </div>
                   )}
                   {isLeader && (
                     <>
