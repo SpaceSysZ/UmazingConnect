@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { MessageSquare, Upload, X } from "lucide-react"
 import { validateAndCompressImage } from "@/lib/image-compression"
+import { ImageCropDialog } from "./image-crop-dialog"
 
 interface CreatePostDialogProps {
   clubId: string
@@ -33,26 +34,52 @@ export const CreatePostDialog = memo(function CreatePostDialog({
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [cropDialogOpen, setCropDialogOpen] = useState(false)
+  const [tempImageSrc, setTempImageSrc] = useState<string | null>(null)
 
   const handleImageSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
-      // Validate and compress the image
-      const compressedFile = await validateAndCompressImage(file)
-      
-      if (!compressedFile) {
-        // Validation or compression failed
-        event.target.value = '' // Reset input
-        return
-      }
-
-      setSelectedImage(compressedFile)
+      // Read the file for cropping
       const reader = new FileReader()
       reader.onload = (e) => {
-        setImagePreview(e.target?.result as string)
+        const imageSrc = e.target?.result as string
+        setTempImageSrc(imageSrc)
+        setCropDialogOpen(true)
       }
       reader.readAsDataURL(file)
+      
+      // Reset input
+      event.target.value = ''
     }
+  }, [])
+
+  const handleCropComplete = useCallback(async (croppedFile: File) => {
+    // Compress the cropped image
+    const compressedFile = await validateAndCompressImage(croppedFile)
+    
+    if (!compressedFile) {
+      setCropDialogOpen(false)
+      setTempImageSrc(null)
+      return
+    }
+
+    setSelectedImage(compressedFile)
+    
+    // Create preview
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      setImagePreview(e.target?.result as string)
+    }
+    reader.readAsDataURL(compressedFile)
+    
+    setCropDialogOpen(false)
+    setTempImageSrc(null)
+  }, [])
+
+  const handleCropCancel = useCallback(() => {
+    setCropDialogOpen(false)
+    setTempImageSrc(null)
   }, [])
 
   const removeImage = useCallback(() => {
@@ -191,6 +218,16 @@ export const CreatePostDialog = memo(function CreatePostDialog({
           </Button>
         </div>
       </DialogContent>
+
+      {/* Image Crop Dialog */}
+      {tempImageSrc && (
+        <ImageCropDialog
+          open={cropDialogOpen}
+          imageSrc={tempImageSrc}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+      )}
     </Dialog>
   )
 })
