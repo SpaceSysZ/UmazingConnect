@@ -154,8 +154,7 @@ export function ClaimClubDialog({
               id="confirm-president"
               checked={isConfirmed}
               onCheckedChange={(checked) => setIsConfirmed(checked as boolean)}
-              className="mt-0.5 border-2 border-gray-600 data-[state=checked]:border-primary"
-            />
+              className="mt-0.5 h-4 w-4 border-2 border-solid border-slate-900 data-[state=checked]:border-primary"            />
             <div className="grid gap-1 leading-none flex-1">
               <label
                 htmlFor="confirm-president"
