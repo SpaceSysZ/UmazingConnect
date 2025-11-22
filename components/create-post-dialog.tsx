@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, memo } from "react"
+import { useState, useCallback, memo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -38,6 +38,41 @@ export const CreatePostDialog = memo(function CreatePostDialog({
   const [tempImageSrc, setTempImageSrc] = useState<string | null>(null)
   const [cooldownSeconds, setCooldownSeconds] = useState(0)
 
+  useEffect(() => {
+    // Check for active cooldown on mount
+    const savedCooldown = localStorage.getItem(`post_cooldown_${clubId}`)
+    if (savedCooldown) {
+      const expiryTime = parseInt(savedCooldown)
+      const now = Date.now()
+      if (expiryTime > now) {
+        const remaining = Math.ceil((expiryTime - now) / 1000)
+        setCooldownSeconds(remaining)
+      } else {
+        localStorage.removeItem(`post_cooldown_${clubId}`)
+      }
+    }
+  }, [clubId])
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout
+
+    if (cooldownSeconds > 0) {
+      interval = setInterval(() => {
+        setCooldownSeconds((prev) => {
+          if (prev <= 1) {
+            localStorage.removeItem(`post_cooldown_${clubId}`)
+            return 0
+          }
+          return prev - 1
+        })
+      }, 1000)
+    }
+
+    return () => {
+      if (interval) clearInterval(interval)
+    }
+  }, [cooldownSeconds, clubId])
+
   const handleImageSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
@@ -57,7 +92,7 @@ export const CreatePostDialog = memo(function CreatePostDialog({
         setCropDialogOpen(true)
       }
       reader.readAsDataURL(file)
-      
+
       // Reset input
       event.target.value = ''
     }
@@ -66,7 +101,7 @@ export const CreatePostDialog = memo(function CreatePostDialog({
   const handleCropComplete = useCallback(async (croppedFile: File) => {
     // Compress the cropped image
     const compressedFile = await validateAndCompressImage(croppedFile)
-    
+
     if (!compressedFile) {
       setCropDialogOpen(false)
       setTempImageSrc(null)
@@ -74,14 +109,14 @@ export const CreatePostDialog = memo(function CreatePostDialog({
     }
 
     setSelectedImage(compressedFile)
-    
+
     // Create preview
     const reader = new FileReader()
     reader.onload = (e) => {
       setImagePreview(e.target?.result as string)
     }
     reader.readAsDataURL(compressedFile)
-    
+
     setCropDialogOpen(false)
     setTempImageSrc(null)
   }, [])
@@ -143,18 +178,12 @@ export const CreatePostDialog = memo(function CreatePostDialog({
         setOpen(false)
         alert("Post created successfully!")
         onPostCreated?.()
-        
+
         // Start cooldown timer (15 seconds)
-        setCooldownSeconds(15)
-        const interval = setInterval(() => {
-          setCooldownSeconds((prev) => {
-            if (prev <= 1) {
-              clearInterval(interval)
-              return 0
-            }
-            return prev - 1
-          })
-        }, 1000)
+        const cooldownTime = 15
+        setCooldownSeconds(cooldownTime)
+        const expiryTime = Date.now() + (cooldownTime * 1000)
+        localStorage.setItem(`post_cooldown_${clubId}`, expiryTime.toString())
       } else {
         const data = await response.json()
         // Show rate limit information if available
@@ -249,9 +278,9 @@ export const CreatePostDialog = memo(function CreatePostDialog({
             )}
           </div>
 
-          <Button 
-            onClick={handleSubmit} 
-            className="w-full h-9 sm:h-10 text-sm" 
+          <Button
+            onClick={handleSubmit}
+            className="w-full h-9 sm:h-10 text-sm"
             disabled={!content.trim() || loading || cooldownSeconds > 0}
           >
             {loading ? "Posting..." : cooldownSeconds > 0 ? `Wait ${cooldownSeconds}s` : "Post"}

@@ -10,7 +10,7 @@
 
 ### File upload
 
-- Added filter and fixed this already
+- Added filter and fixed this already (Complete)
 
 ### Moderation (admins) 
 
@@ -21,11 +21,11 @@
 
 ### Check mark darker 
 
-- This is during the verification of presidency, needs have the border on it
+- This is during the verification of presidency, needs have the border on it (complete)
 
 ### join text is white on white? 
 
-- Not an actual issue since the button has no function
+- Not an actual issue since the button has no function (complete)
 
 ### internal way to assign club leadership from higher ups, or to transfer ownership
 

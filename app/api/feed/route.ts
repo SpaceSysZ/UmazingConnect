@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
         p.club_id,
         p.content,
         p.image_url,
-        COUNT(DISTINCT pl.id) as likes_count,
+        COUNT(DISTINCT pl.id)::int as likes_count,
         0 as comments_count,
         p.created_at,
         p.user_id as author_id,

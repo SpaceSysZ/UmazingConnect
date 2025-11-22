@@ -18,7 +18,7 @@ export async function GET(
         u.name as author_name,
         u.avatar_url as author_avatar,
         u.email as author_email,
-        COUNT(DISTINCT pl.id) as likes_count
+        COUNT(DISTINCT pl.id)::int as likes_count
       FROM posts p
       JOIN users u ON p.user_id = u.id
       LEFT JOIN post_likes pl ON p.id = pl.post_id
