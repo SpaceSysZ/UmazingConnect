@@ -84,11 +84,21 @@ export function HomeContent() {
     }
 
     try {
-      const response = await fetch(`/api/posts/${postId}/like`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id }),
-      })
+      let response
+      
+      if (isLiked) {
+        // Unlike: send DELETE request with userId in query params
+        response = await fetch(`/api/posts/${postId}/like?userId=${encodeURIComponent(user.id)}`, {
+          method: "DELETE",
+        })
+      } else {
+        // Like: send POST request with userId in body
+        response = await fetch(`/api/posts/${postId}/like`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: user.id }),
+        })
+      }
 
       if (response.ok) {
         const data = await response.json()
@@ -98,11 +108,14 @@ export function HomeContent() {
               ? {
                   ...post,
                   isLiked: data.liked,
-                  likes_count: data.liked ? post.likes_count + 1 : post.likes_count - 1,
+                  likes_count: data.likeCount,
                 }
               : post
           )
         )
+      } else {
+        const error = await response.json()
+        console.error("Error toggling like:", error)
       }
     } catch (error) {
       console.error("Error toggling like:", error)
