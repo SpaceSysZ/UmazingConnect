@@ -43,17 +43,6 @@ export function ClaimClubDialog({
   const [isOpen, setIsOpen] = useState(false)
   const [isConfirmed, setIsConfirmed] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [debugInfo, setDebugInfo] = useState<string>("")
-
-  const checkUserStatus = async () => {
-    try {
-      const response = await fetch(`/api/debug/user-status?userId=${userId}`)
-      const data = await response.json()
-      setDebugInfo(`User exists in DB: ${data.exists}. ${data.message}`)
-    } catch (error) {
-      setDebugInfo("Error checking user status")
-    }
-  }
 
   const handleClaim = async () => {
     if (!isConfirmed) {
@@ -62,7 +51,6 @@ export function ClaimClubDialog({
     }
 
     setIsLoading(true)
-    setDebugInfo("Attempting to claim club...")
 
     try {
       const response = await fetch(`/api/clubs/${clubId}/claim`, {
@@ -134,19 +122,6 @@ export function ClaimClubDialog({
             <p className="text-xs text-blue-600 mt-1">
               You will become the president of this club and be able to manage its members and activities.
             </p>
-          </div>
-
-          {/* Debug Section */}
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-2.5 sm:p-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-              <p className="text-xs sm:text-sm font-medium text-gray-700">Debug Info:</p>
-              <Button variant="outline" size="sm" onClick={checkUserStatus} className="h-8 text-xs w-full sm:w-auto">
-                Check User Status
-              </Button>
-            </div>
-            {debugInfo && (
-              <p className="text-xs text-gray-600 break-words">{debugInfo}</p>
-            )}
           </div>
 
           <div className="flex items-start space-x-2">

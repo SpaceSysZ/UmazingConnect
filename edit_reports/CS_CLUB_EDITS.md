@@ -6,7 +6,7 @@
 
 ### infinite rate, no limits 
 
-- David posted like 400 posts to the server and posts, need to have limits on number of uploads per minute, maybe just one upload? 
+- David posted like 400 posts to the server and posts, need to have limits on number of uploads per minute, maybe just one upload? (complete)
 
 ### File upload
 

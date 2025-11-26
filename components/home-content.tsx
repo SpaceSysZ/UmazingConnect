@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Heart, Users, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/auth-context"
+import Link from "next/link"
 
 interface ClubPost {
   id: string
@@ -185,7 +186,9 @@ export function HomeContent() {
                     </Avatar>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                        <h3 className="font-semibold text-sm sm:text-base text-card-foreground truncate">{post.club_name || "Club"}</h3>
+                        <Link href={`/clubs/${post.club_id}`} className="hover:underline">
+                          <h3 className="font-semibold text-sm sm:text-base text-card-foreground truncate">{post.club_name || "Club"}</h3>
+                        </Link>
                         <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs flex-shrink-0">
                           <Users className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
                           Club
