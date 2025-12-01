@@ -49,6 +49,14 @@ interface ClubPost {
   author_avatar: string | null
 }
 
+interface President {
+  id: string
+  name: string
+  email: string
+  avatar_url: string | null
+  joined_at: string
+}
+
 interface Club {
   id: string
   name: string
@@ -63,6 +71,7 @@ interface Club {
   president_name: string | null
   president_avatar: string | null
   president_email: string | null
+  presidents: President[]
   tags: string[]
   memberRole: string | null
 }
@@ -444,27 +453,33 @@ export function ClubDetailPage({ clubId }: { clubId: string }) {
             </CardContent>
           </Card>
 
-          {/* President Info */}
-          {club.is_claimed && club.president_name && (
+          {/* Presidents Info */}
+          {club.is_claimed && club.presidents && club.presidents.length > 0 && (
             <Card>
               <CardHeader className="px-3 sm:px-6 py-3 sm:py-6">
-                <CardTitle className="text-sm sm:text-base">Club President</CardTitle>
+                <CardTitle className="text-sm sm:text-base">
+                  {club.presidents.length === 1 ? "Club President" : "Club Presidents"}
+                </CardTitle>
               </CardHeader>
               <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
-                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                  <Avatar className="h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0">
-                    <AvatarImage src={club.president_avatar || "/placeholder.svg"} />
-                    <AvatarFallback className="text-xs sm:text-sm">
-                      {club.president_name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-sm sm:text-base truncate">{club.president_name}</p>
-                    <p className="text-xs sm:text-sm text-muted-foreground truncate">{club.president_email}</p>
-                  </div>
+                <div className="space-y-3">
+                  {club.presidents.map((president) => (
+                    <div key={president.id} className="flex items-center gap-2 sm:gap-3 min-w-0">
+                      <Avatar className="h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0">
+                        <AvatarImage src={president.avatar_url || "/placeholder.svg"} />
+                        <AvatarFallback className="text-xs sm:text-sm">
+                          {president.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-sm sm:text-base truncate">{president.name}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground truncate">{president.email}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>

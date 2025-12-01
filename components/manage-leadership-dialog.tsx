@@ -35,7 +35,7 @@ interface ManageLeadershipDialogProps {
 }
 
 const LEADERSHIP_ROLES = [
-  { value: 'president', label: 'President', icon: Crown },
+  { value: 'president', label: 'Co-President', icon: Crown },
   { value: 'vice_president', label: 'Vice President', icon: UserCog },
   { value: 'officer', label: 'Officer', icon: Users },
 ]
@@ -98,13 +98,17 @@ export function ManageLeadershipDialog({ clubId, clubName, currentUserId, isPres
     }
   }
 
-  const handleDemoteLeader = async (leaderId: string) => {
+  const handleDemoteLeader = async (leaderId: string, leaderRole: string) => {
     if (leaderId === currentUserId) {
       alert("You cannot demote yourself. Use the transfer presidency feature instead.")
       return
     }
 
-    if (confirm("Are you sure you want to demote this leader to a regular member?")) {
+    const confirmMessage = leaderRole === 'president' 
+      ? "Are you sure you want to remove this co-president? They will become a regular member."
+      : "Are you sure you want to demote this leader to a regular member?"
+
+    if (confirm(confirmMessage)) {
       try {
         const response = await fetch(`/api/clubs/${clubId}/members/${leaderId}/role`, {
           method: "PUT",
@@ -229,11 +233,11 @@ export function ManageLeadershipDialog({ clubId, clubName, currentUserId, isPres
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDemoteLeader(leader.user_id)}
+                          onClick={() => handleDemoteLeader(leader.user_id, leader.role)}
                           className="h-8 text-xs sm:text-sm w-full sm:w-auto"
                         >
                           <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                          Demote
+                          {leader.role === 'president' ? 'Remove' : 'Demote'}
                         </Button>
                       )}
                     </div>
@@ -267,7 +271,7 @@ export function ManageLeadershipDialog({ clubId, clubName, currentUserId, isPres
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {LEADERSHIP_ROLES.filter(role => role.value !== 'president').map((role) => (
+                    {LEADERSHIP_ROLES.map((role) => (
                       <SelectItem key={role.value} value={role.value}>
                         {role.label}
                       </SelectItem>
@@ -305,7 +309,7 @@ export function ManageLeadershipDialog({ clubId, clubName, currentUserId, isPres
                       <Badge variant="outline" className="text-xs flex-shrink-0">Member</Badge>
                     </div>
                     <div className="flex gap-1 flex-wrap sm:flex-nowrap">
-                      {LEADERSHIP_ROLES.filter(role => role.value !== 'president').map((role) => (
+                      {LEADERSHIP_ROLES.map((role) => (
                         <Button
                           key={role.value}
                           variant="outline"
@@ -314,7 +318,7 @@ export function ManageLeadershipDialog({ clubId, clubName, currentUserId, isPres
                           className="h-8 text-xs flex-1 sm:flex-none"
                         >
                           <span className="hidden sm:inline">{role.label}</span>
-                          <span className="sm:hidden">{role.value === 'vice_president' ? 'VP' : role.label}</span>
+                          <span className="sm:hidden">{role.value === 'vice_president' ? 'VP' : role.value === 'president' ? 'Pres' : role.label}</span>
                         </Button>
                       ))}
                     </div>

@@ -11,8 +11,7 @@ export async function GET(
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
 
-    // Get club details with president info
-    // Handle tags gracefully if table doesn't exist
+    // Get club details with primary president info (for backward compatibility)
     let clubQuery = `
       SELECT 
         c.*,
@@ -34,6 +33,22 @@ export async function GET(
     }
 
     const club = clubResult.rows[0]
+
+    // Get all presidents (supports multiple presidents)
+    const presidentsQuery = `
+      SELECT 
+        u.id,
+        u.name,
+        u.email,
+        u.avatar_url,
+        cm.joined_at
+      FROM club_members cm
+      JOIN users u ON cm.user_id = u.id
+      WHERE cm.club_id = $1 AND cm.role = 'president'
+      ORDER BY cm.joined_at ASC
+    `
+    const presidentsResult = await pool.query(presidentsQuery, [clubId])
+    club.presidents = presidentsResult.rows
     
     // Try to get tags, fallback to empty array if table doesn't exist
     let tags = []

@@ -51,13 +51,27 @@ export async function POST(
     await pool.query('BEGIN')
 
     try {
-      // Update club to claimed
-      await pool.query(
-        'UPDATE clubs SET is_claimed = TRUE, president_id = $1 WHERE id = $2',
-        [userId, clubId]
+      // Check if club already has presidents
+      const existingPresidents = await pool.query(
+        'SELECT user_id FROM club_members WHERE club_id = $1 AND role = $2',
+        [clubId, 'president']
       )
 
-      // Add user as president member
+      // Update club to claimed and set first president as primary
+      if (existingPresidents.rows.length === 0) {
+        await pool.query(
+          'UPDATE clubs SET is_claimed = TRUE, president_id = $1 WHERE id = $2',
+          [userId, clubId]
+        )
+      } else {
+        // Just mark as claimed if adding additional president
+        await pool.query(
+          'UPDATE clubs SET is_claimed = TRUE WHERE id = $1',
+          [clubId]
+        )
+      }
+
+      // Add user as president member (supports multiple presidents)
       await pool.query(
         'INSERT INTO club_members (club_id, user_id, role) VALUES ($1, $2, $3) ON CONFLICT (club_id, user_id) DO UPDATE SET role = $3',
         [clubId, userId, 'president']
@@ -65,9 +79,13 @@ export async function POST(
 
       await pool.query('COMMIT')
 
+      const message = existingPresidents.rows.length > 0
+        ? `You are now a co-president of ${club.name}!`
+        : `You are now the president of ${club.name}!`
+
       return NextResponse.json({
         success: true,
-        message: `You are now the president of ${club.name}!`,
+        message,
       })
     } catch (error) {
       await pool.query('ROLLBACK')

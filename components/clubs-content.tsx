@@ -34,6 +34,7 @@ import {
 import { useAuth } from "@/contexts/auth-context"
 import { AdminClubImport } from "./admin-club-import"
 import { ClaimClubDialog } from "./claim-club-dialog"
+import { ClaimSponsorDialog } from "./claim-sponsor-dialog"
 import { ManageLeadershipDialog } from "./manage-leadership-dialog"
 import { CreatePostDialog } from "./create-post-dialog"
 
@@ -297,22 +298,33 @@ export function ClubsContent() {
             </div>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2">
             {!club.is_claimed ? (
               user?.id ? (
-                <ClaimClubDialog
-                  clubId={club.id}
-                  clubName={club.name}
-                  userId={user.id}
-                  userName={user.name || "User"}
-                  userEmail={user.email}
-                  userRole={user.role}
-                  userGrade={user.grade}
-                  userDepartment={user.department}
-                  userBio={user.bio}
-                  userAvatar={user.profilePicture}
-                  onClaimSuccess={handleClaimSuccess}
-                />
+                <>
+                  <ClaimClubDialog
+                    clubId={club.id}
+                    clubName={club.name}
+                    userId={user.id}
+                    userName={user.name || "User"}
+                    userEmail={user.email}
+                    userRole={user.role}
+                    userGrade={user.grade}
+                    userDepartment={user.department}
+                    userBio={user.bio}
+                    userAvatar={user.profilePicture}
+                    onClaimSuccess={handleClaimSuccess}
+                  />
+                  <ClaimSponsorDialog
+                    clubId={club.id}
+                    clubName={club.name}
+                    userId={user.id}
+                    userName={user.name || "User"}
+                    userEmail={user.email}
+                    userType={user.userType}
+                    onClaimSuccess={handleClaimSuccess}
+                  />
+                </>
               ) : (
                 <Button disabled className="w-full" variant="default">
                   <Crown className="h-4 w-4 mr-2" />
