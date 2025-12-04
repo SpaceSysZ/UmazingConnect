@@ -18,8 +18,6 @@ export const msalConfig: Configuration = {
     storeAuthStateInCookie: true, // Enable for better compatibility with mobile browsers
   },
   system: {
-    // Disable crypto check for non-secure contexts (mobile testing over HTTP)
-    allowNativeBroker: false,
     loggerOptions: {
       logLevel: isSecureContext ? 3 : 1, // Less verbose in non-secure contexts
     },
@@ -57,6 +55,7 @@ export interface UserProfile {
   profilePicture?: string
   bio?: string
   interests?: string[]
+  userType?: string // From Azure AD - 'None' for teachers/staff
   createdAt: Date
   updatedAt: Date
 }

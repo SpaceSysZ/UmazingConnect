@@ -53,4 +53,10 @@ export async function transaction(callback: (client: any) => Promise<any>) {
   }
 }
 
+export const db = {
+  query,
+  transaction,
+  pool,
+}
+
 export default pool
