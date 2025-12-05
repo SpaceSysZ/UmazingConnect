@@ -89,8 +89,7 @@ export async function GET(
           cm.joined_at,
           u.name,
           u.email,
-          u.avatar_url,
-          0 as sort_order
+          u.avatar_url
         FROM club_members cm
         JOIN users u ON cm.user_id = u.id
         WHERE cm.club_id = $1
@@ -102,11 +101,7 @@ export async function GET(
           cs.assigned_at as joined_at,
           u.name,
           u.email,
-          u.avatar_url,
-          CASE 
-            WHEN 'sponsor' = 'sponsor' THEN 0
-            ELSE 1
-          END as sort_order
+          u.avatar_url
         FROM club_sponsors cs
         JOIN users u ON cs.user_id = u.id
         WHERE cs.club_id = $1 AND cs.status = 'active'
@@ -121,7 +116,7 @@ export async function GET(
         END,
         combined.joined_at ASC
     `
-    const membersResult = await pool.query(membersQuery, [clubId, clubId])
+    const membersResult = await pool.query(membersQuery, [clubId])
 
     // Get recent posts (limit to 20 for performance)
     // Handle case where posts table might not exist yet
