@@ -255,7 +255,7 @@ export function ClubsContent() {
         <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
           <div className="flex items-start justify-between">
             <div className="space-y-1 min-w-0 flex-1">
-              <Link href={`/clubs/${club.id}`} onClick={(e) => e.stopPropagation()}>
+              <Link href={`/clubs/${club.id}`}>
                 <CardTitle className="text-base sm:text-lg hover:text-primary transition-colors cursor-pointer truncate">
                   {club.name}
                 </CardTitle>

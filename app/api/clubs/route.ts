@@ -49,9 +49,10 @@ export async function GET(request: NextRequest) {
 
     const result = await pool.query(query, params)
 
-    // If userId is provided, also check membership status
+    // If userId is provided, also check membership and sponsor status
     // Skip for demo user (not a valid UUID)
     if (userId && userId !== 'demo-user-123') {
+      // Check club memberships
       const membershipsQuery = `
         SELECT club_id, role FROM club_members WHERE user_id = $1
       `
@@ -60,11 +61,25 @@ export async function GET(request: NextRequest) {
         memberships.rows.map((m: any) => [m.club_id, m.role])
       )
 
-      const clubs = result.rows.map((club: any) => ({
-        ...club,
-        is_joined: membershipMap.has(club.id),
-        memberRole: membershipMap.get(club.id) || null,
-      }))
+      // Check club sponsorships
+      const sponsorshipsQuery = `
+        SELECT club_id FROM club_sponsors WHERE user_id = $1 AND status = 'active'
+      `
+      const sponsorships = await pool.query(sponsorshipsQuery, [userId])
+      const sponsorshipSet = new Set(
+        sponsorships.rows.map((s: any) => s.club_id)
+      )
+
+      const clubs = result.rows.map((club: any) => {
+        const isSponsor = sponsorshipSet.has(club.id)
+        const isMember = membershipMap.has(club.id)
+        
+        return {
+          ...club,
+          is_joined: isMember || isSponsor, // Sponsors are considered "joined"
+          memberRole: isSponsor ? 'sponsor' : (membershipMap.get(club.id) || null),
+        }
+      })
 
       return NextResponse.json({
         success: true,

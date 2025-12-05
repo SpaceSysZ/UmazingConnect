@@ -97,11 +97,12 @@ export function Navigation({ activeSection, onSectionChange, user, onLogout }: N
                     <p className="text-sm font-medium leading-none">{user.name || "User"}</p>
                     <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                     <div className="flex items-center gap-2 mt-1">
-                      <p className="text-xs leading-none text-muted-foreground capitalize">{user.role}</p>
-                      {isTeacher && (
+                      {isTeacher ? (
                         <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full font-medium">
                           Teacher
                         </span>
+                      ) : (
+                        <p className="text-xs leading-none text-muted-foreground capitalize">{user.role}</p>
                       )}
                     </div>
                   </div>
