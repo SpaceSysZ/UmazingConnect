@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Navigation } from "@/components/navigation"
 import { HomeContent } from "@/components/home-content"
@@ -11,7 +11,7 @@ import { LoginScreen } from "@/components/login-screen"
 
 type ActiveSection = "home" | "clubs"
 
-export function MainLayout() {
+function MainLayoutContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [activeSection, setActiveSection] = useState<ActiveSection>("home")
@@ -75,5 +75,20 @@ export function MainLayout() {
       />
       <main className="pt-14 sm:pt-16">{renderContent()}</main>
     </div>
+  )
+}
+
+export function MainLayout() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    }>
+      <MainLayoutContent />
+    </Suspense>
   )
 }
