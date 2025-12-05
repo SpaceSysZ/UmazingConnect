@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Home, Users, Bell, GraduationCap, Settings, LogOut } from "lucide-react"
 import { UserProfile } from "@/lib/auth-config"
+import { UserSettingsDialog } from "./user-settings-dialog"
 
 type ActiveSection = "home" | "clubs"
 
@@ -24,6 +25,7 @@ interface NavigationProps {
 
 export function Navigation({ activeSection, onSectionChange, user, onLogout }: NavigationProps) {
   const [isTeacher, setIsTeacher] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   useEffect(() => {
     if (user?.email) {
@@ -81,43 +83,52 @@ export function Navigation({ activeSection, onSectionChange, user, onLogout }: N
 
             {/* User menu - Desktop */}
             {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-9 w-9 sm:h-10 sm:w-10 rounded-full hidden md:flex">
-                    <Avatar className="h-9 w-9 sm:h-10 sm:w-10">
-                      <AvatarImage src={user.profilePicture || "/placeholder-user.jpg"} alt="Profile" />
-                      <AvatarFallback className="bg-primary text-primary-foreground text-xs sm:text-sm">
-                        {user.name?.split(" ").map(n => n[0]).join("") || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <div className="flex flex-col space-y-1 p-2">
-                    <p className="text-sm font-medium leading-none">{user.name || "User"}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      {isTeacher ? (
-                        <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full font-medium">
-                          Teacher
-                        </span>
-                      ) : (
-                        <p className="text-xs leading-none text-muted-foreground capitalize">{user.role}</p>
-                      )}
+              <>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-9 w-9 sm:h-10 sm:w-10 rounded-full hidden md:flex">
+                      <Avatar className="h-9 w-9 sm:h-10 sm:w-10">
+                        <AvatarImage src={user.profilePicture || "/placeholder-user.jpg"} alt="Profile" />
+                        <AvatarFallback className="bg-primary text-primary-foreground text-xs sm:text-sm">
+                          {user.name?.split(" ").map(n => n[0]).join("") || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <div className="flex flex-col space-y-1 p-2">
+                      <p className="text-sm font-medium leading-none">{user.name || "User"}</p>
+                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        {isTeacher ? (
+                          <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full font-medium">
+                            Teacher
+                          </span>
+                        ) : (
+                          <p className="text-xs leading-none text-muted-foreground capitalize">{user.role}</p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={onLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={onLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* Settings Dialog */}
+                <UserSettingsDialog
+                  open={settingsOpen}
+                  onOpenChange={setSettingsOpen}
+                  user={user}
+                />
+              </>
             ) : (
               // Show placeholder when no user (during loading or not authenticated)
               <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-muted animate-pulse hidden md:block" />
