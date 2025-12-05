@@ -29,6 +29,7 @@ import { ManageLeadershipDialog } from "./manage-leadership-dialog"
 import { EditClubDialog } from "./edit-club-dialog"
 import { ManageTagsDialog } from "./manage-tags-dialog"
 import { TransferPresidencyDialog } from "./transfer-presidency-dialog"
+import { CreatePostDialog } from "./create-post-dialog"
 
 interface ClubMember {
   id: string
@@ -228,9 +229,9 @@ export function ClubDetailPage({ clubId }: { clubId: string }) {
   return (
     <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-6">
       {/* Back Button */}
-      <Button variant="ghost" onClick={() => router.push("/")} className="mb-2 sm:mb-4 h-9 text-sm" size="sm">
+      <Button variant="ghost" onClick={() => router.back()} className="mb-2 sm:mb-4 h-9 text-sm" size="sm">
         <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-        Back to Clubs
+        Back
       </Button>
 
       {/* Hero Section */}
@@ -393,6 +394,16 @@ export function ClubDetailPage({ clubId }: { clubId: string }) {
             <CardContent className="pt-4 sm:pt-6 space-y-2 sm:space-y-3 px-3 sm:px-6 pb-3 sm:pb-6">
               {club.is_claimed ? (
                 <>
+                  {/* Create Post Button - for officers and presidents */}
+                  {user?.id && isLeader && (
+                    <CreatePostDialog
+                      clubId={club.id}
+                      clubName={club.name}
+                      userId={user.id}
+                      onPostCreated={loadClubDetails}
+                    />
+                  )}
+
                   {user?.id && club.memberRole !== "president" && (
                     <Button
                       onClick={handleJoinLeave}
