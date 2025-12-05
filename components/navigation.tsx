@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -22,6 +23,17 @@ interface NavigationProps {
 }
 
 export function Navigation({ activeSection, onSectionChange, user, onLogout }: NavigationProps) {
+  const [isTeacher, setIsTeacher] = useState(false)
+
+  useEffect(() => {
+    if (user?.email) {
+      fetch(`/api/users/check-teacher?email=${encodeURIComponent(user.email)}`)
+        .then(res => res.json())
+        .then(data => setIsTeacher(data.isTeacher))
+        .catch(() => setIsTeacher(false))
+    }
+  }, [user?.email])
+
   const navItems = [
     { id: "home" as const, label: "Home", icon: Home },
     { id: "clubs" as const, label: "Clubs", icon: Users },
@@ -84,7 +96,14 @@ export function Navigation({ activeSection, onSectionChange, user, onLogout }: N
                   <div className="flex flex-col space-y-1 p-2">
                     <p className="text-sm font-medium leading-none">{user.name || "User"}</p>
                     <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                    <p className="text-xs leading-none text-muted-foreground capitalize">{user.role}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <p className="text-xs leading-none text-muted-foreground capitalize">{user.role}</p>
+                      {isTeacher && (
+                        <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full font-medium">
+                          Teacher
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>

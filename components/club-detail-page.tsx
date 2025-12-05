@@ -58,6 +58,13 @@ interface President {
   joined_at: string
 }
 
+interface Sponsor {
+  id: string
+  name: string
+  email: string
+  avatar_url: string | null
+}
+
 interface Club {
   id: string
   name: string
@@ -73,6 +80,7 @@ interface Club {
   president_avatar: string | null
   president_email: string | null
   presidents: President[]
+  sponsors: Sponsor[]
   tags: string[]
   memberRole: string | null
 }
@@ -96,6 +104,7 @@ const categoryColors = {
 }
 
 const roleIcons = {
+  sponsor: Shield,
   president: Crown,
   vice_president: Shield,
   officer: UserCog,
@@ -493,6 +502,39 @@ export function ClubDetailPage({ clubId }: { clubId: string }) {
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-sm sm:text-base truncate">{president.name}</p>
                         <p className="text-xs sm:text-sm text-muted-foreground truncate">{president.email}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Sponsors Info */}
+          {club.sponsors && club.sponsors.length > 0 && (
+            <Card>
+              <CardHeader className="px-3 sm:px-6 py-3 sm:py-6">
+                <CardTitle className="text-sm sm:text-base flex items-center gap-2">
+                  <Shield className="h-4 w-4" />
+                  {club.sponsors.length === 1 ? "Club Sponsor" : "Club Sponsors"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+                <div className="space-y-3">
+                  {club.sponsors.map((sponsor) => (
+                    <div key={sponsor.id} className="flex items-center gap-2 sm:gap-3 min-w-0">
+                      <Avatar className="h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0">
+                        <AvatarImage src={sponsor.avatar_url || "/placeholder.svg"} />
+                        <AvatarFallback className="text-xs sm:text-sm">
+                          {sponsor.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-sm sm:text-base truncate">{sponsor.name}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground truncate">{sponsor.email}</p>
                       </div>
                     </div>
                   ))}

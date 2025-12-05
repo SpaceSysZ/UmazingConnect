@@ -49,6 +49,21 @@ export async function GET(
     `
     const presidentsResult = await pool.query(presidentsQuery, [clubId])
     club.presidents = presidentsResult.rows
+
+    // Get all sponsors
+    const sponsorsQuery = `
+      SELECT 
+        u.id,
+        u.name,
+        u.email,
+        u.avatar_url
+      FROM club_sponsors cs
+      JOIN users u ON cs.user_id = u.id
+      WHERE cs.club_id = $1 AND cs.status = 'active'
+      ORDER BY cs.assigned_at ASC
+    `
+    const sponsorsResult = await pool.query(sponsorsQuery, [clubId])
+    club.sponsors = sponsorsResult.rows
     
     // Try to get tags, fallback to empty array if table doesn't exist
     let tags = []
@@ -64,7 +79,7 @@ export async function GET(
     
     club.tags = tags
 
-    // Get member count and list
+    // Get member count and list (including sponsors)
     const membersQuery = `
       SELECT 
         cm.id,
@@ -77,14 +92,27 @@ export async function GET(
       FROM club_members cm
       JOIN users u ON cm.user_id = u.id
       WHERE cm.club_id = $1
+      UNION ALL
+      SELECT 
+        cs.id,
+        cs.user_id,
+        'sponsor' as role,
+        cs.assigned_at as joined_at,
+        u.name,
+        u.email,
+        u.avatar_url
+      FROM club_sponsors cs
+      JOIN users u ON cs.user_id = u.id
+      WHERE cs.club_id = $1 AND cs.status = 'active'
       ORDER BY 
-        CASE cm.role 
+        CASE role 
+          WHEN 'sponsor' THEN 0
           WHEN 'president' THEN 1
           WHEN 'vice_president' THEN 2
           WHEN 'officer' THEN 3
           ELSE 4
         END,
-        cm.joined_at ASC
+        joined_at ASC
     `
     const membersResult = await pool.query(membersQuery, [clubId])
 
