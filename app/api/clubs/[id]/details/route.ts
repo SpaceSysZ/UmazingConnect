@@ -81,40 +81,47 @@ export async function GET(
 
     // Get member count and list (including sponsors)
     const membersQuery = `
-      SELECT 
-        cm.id,
-        cm.user_id,
-        cm.role,
-        cm.joined_at,
-        u.name,
-        u.email,
-        u.avatar_url
-      FROM club_members cm
-      JOIN users u ON cm.user_id = u.id
-      WHERE cm.club_id = $1
-      UNION ALL
-      SELECT 
-        cs.id,
-        cs.user_id,
-        'sponsor' as role,
-        cs.assigned_at as joined_at,
-        u.name,
-        u.email,
-        u.avatar_url
-      FROM club_sponsors cs
-      JOIN users u ON cs.user_id = u.id
-      WHERE cs.club_id = $1 AND cs.status = 'active'
+      SELECT * FROM (
+        SELECT 
+          cm.id,
+          cm.user_id,
+          cm.role,
+          cm.joined_at,
+          u.name,
+          u.email,
+          u.avatar_url,
+          0 as sort_order
+        FROM club_members cm
+        JOIN users u ON cm.user_id = u.id
+        WHERE cm.club_id = $1
+        UNION ALL
+        SELECT 
+          cs.id,
+          cs.user_id,
+          'sponsor'::text as role,
+          cs.assigned_at as joined_at,
+          u.name,
+          u.email,
+          u.avatar_url,
+          CASE 
+            WHEN 'sponsor' = 'sponsor' THEN 0
+            ELSE 1
+          END as sort_order
+        FROM club_sponsors cs
+        JOIN users u ON cs.user_id = u.id
+        WHERE cs.club_id = $1 AND cs.status = 'active'
+      ) combined
       ORDER BY 
-        CASE role 
+        CASE combined.role 
           WHEN 'sponsor' THEN 0
           WHEN 'president' THEN 1
           WHEN 'vice_president' THEN 2
           WHEN 'officer' THEN 3
           ELSE 4
         END,
-        joined_at ASC
+        combined.joined_at ASC
     `
-    const membersResult = await pool.query(membersQuery, [clubId])
+    const membersResult = await pool.query(membersQuery, [clubId, clubId])
 
     // Get recent posts (limit to 20 for performance)
     // Handle case where posts table might not exist yet
