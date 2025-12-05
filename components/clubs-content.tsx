@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -76,6 +77,7 @@ const categoryColors = {
 
 export function ClubsContent() {
   const { user } = useAuth()
+  const router = useRouter()
   const [clubs, setClubs] = useState<Club[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
@@ -198,8 +200,29 @@ export function ClubsContent() {
     const CategoryIcon = categoryIcons[club.category]
     const isLeader = club.memberRole && ['president', 'vice_president', 'officer'].includes(club.memberRole)
 
+    const handleCardClick = (e: React.MouseEvent) => {
+      // Only navigate if not clicking on a button or interactive element
+      const target = e.target as HTMLElement
+      if (target.closest('button') || target.closest('a[href]')) {
+        return
+      }
+      router.push(`/clubs/${club.id}`)
+    }
+
     return (
-      <Card key={club.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+      <Card 
+        key={club.id} 
+        className="overflow-hidden transition-all duration-200 hover:shadow-lg hover:scale-[1.01] hover:border-2 hover:border-primary/50 cursor-pointer group"
+        onClick={handleCardClick}
+        role="article"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            router.push(`/clubs/${club.id}`)
+          }
+        }}
+      >
         <div className="aspect-video relative overflow-hidden">
           <img
             src={club.image_url || "/placeholder.svg"}
@@ -232,7 +255,7 @@ export function ClubsContent() {
         <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
           <div className="flex items-start justify-between">
             <div className="space-y-1 min-w-0 flex-1">
-              <Link href={`/clubs/${club.id}`}>
+              <Link href={`/clubs/${club.id}`} onClick={(e) => e.stopPropagation()}>
                 <CardTitle className="text-base sm:text-lg hover:text-primary transition-colors cursor-pointer truncate">
                   {club.name}
                 </CardTitle>
@@ -299,32 +322,34 @@ export function ClubsContent() {
           )}
 
           <div className="flex flex-col gap-2">
+            {/* Sponsor Claim Button - Show on ALL clubs for teachers */}
+            {user?.id && (
+              <ClaimSponsorDialog
+                clubId={club.id}
+                clubName={club.name}
+                userId={user.id}
+                userName={user.name || "User"}
+                userEmail={user.email}
+                userType={user.userType}
+                onClaimSuccess={handleClaimSuccess}
+              />
+            )}
+
             {!club.is_claimed ? (
               user?.id ? (
-                <>
-                  <ClaimClubDialog
-                    clubId={club.id}
-                    clubName={club.name}
-                    userId={user.id}
-                    userName={user.name || "User"}
-                    userEmail={user.email}
-                    userRole={user.role}
-                    userGrade={user.grade}
-                    userDepartment={user.department}
-                    userBio={user.bio}
-                    userAvatar={user.profilePicture}
-                    onClaimSuccess={handleClaimSuccess}
-                  />
-                  <ClaimSponsorDialog
-                    clubId={club.id}
-                    clubName={club.name}
-                    userId={user.id}
-                    userName={user.name || "User"}
-                    userEmail={user.email}
-                    userType={user.userType}
-                    onClaimSuccess={handleClaimSuccess}
-                  />
-                </>
+                <ClaimClubDialog
+                  clubId={club.id}
+                  clubName={club.name}
+                  userId={user.id}
+                  userName={user.name || "User"}
+                  userEmail={user.email}
+                  userRole={user.role}
+                  userGrade={user.grade}
+                  userDepartment={user.department}
+                  userBio={user.bio}
+                  userAvatar={user.profilePicture}
+                  onClaimSuccess={handleClaimSuccess}
+                />
               ) : (
                 <Button disabled className="w-full" variant="default">
                   <Crown className="h-4 w-4 mr-2" />
@@ -394,7 +419,10 @@ export function ClubsContent() {
                   </>
                 )}
                 <Button
-                  onClick={() => handleJoinLeave(club.id, club.is_joined || false)}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleJoinLeave(club.id, club.is_joined || false)
+                  }}
                   variant={club.is_joined ? "outline" : "default"}
                   className={club.is_joined ? "flex-1 border-green-500 text-green-600 hover:bg-green-50" : "flex-1"}
                 >

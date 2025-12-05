@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Settings, Upload, X } from "lucide-react"
+import { ImageCropDialog } from "./image-crop-dialog"
 
 interface EditClubDialogProps {
   clubId: string
@@ -46,6 +47,8 @@ export const EditClubDialog = memo(function EditClubDialog({
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [showCropDialog, setShowCropDialog] = useState(false)
+  const [tempImageSrc, setTempImageSrc] = useState<string | null>(null)
 
   // Reset form when dialog opens
   useEffect(() => {
@@ -63,21 +66,48 @@ export const EditClubDialog = memo(function EditClubDialog({
   const handleImageSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
-      if (!file.type.startsWith("image/")) {
-        alert("Please select an image file")
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
+      if (!validTypes.includes(file.type.toLowerCase())) {
+        alert("Please select a valid image file (JPG, JPEG, PNG, WEBP, or GIF)")
         return
       }
+      
+      // Validate file size
       if (file.size > 5 * 1024 * 1024) {
-        alert("Image size should be less than 5MB")
+        alert("Image size must be less than 5MB. Please choose a smaller image.")
         return
       }
-      setSelectedImage(file)
+      
+      // Read file and show crop dialog
       const reader = new FileReader()
       reader.onload = (e) => {
-        setImagePreview(e.target?.result as string)
+        setTempImageSrc(e.target?.result as string)
+        setShowCropDialog(true)
+      }
+      reader.onerror = () => {
+        alert("Failed to read image file. Please try again.")
       }
       reader.readAsDataURL(file)
     }
+    // Reset input so same file can be selected again
+    event.target.value = ''
+  }, [])
+
+  const handleCropComplete = useCallback((croppedFile: File) => {
+    setSelectedImage(croppedFile)
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      setImagePreview(e.target?.result as string)
+    }
+    reader.readAsDataURL(croppedFile)
+    setShowCropDialog(false)
+    setTempImageSrc(null)
+  }, [])
+
+  const handleCropCancel = useCallback(() => {
+    setShowCropDialog(false)
+    setTempImageSrc(null)
   }, [])
 
   const removeImage = useCallback(() => {
@@ -111,7 +141,9 @@ export const EditClubDialog = memo(function EditClubDialog({
           const uploadData = await uploadResponse.json()
           finalImageUrl = uploadData.data.url
         } else {
-          alert("Failed to upload image")
+          const errorData = await uploadResponse.json().catch(() => ({}))
+          const errorMessage = errorData.error || "Failed to upload image. Please try again."
+          alert(errorMessage)
           setLoading(false)
           return
         }
@@ -216,13 +248,13 @@ export const EditClubDialog = memo(function EditClubDialog({
 
           {/* Image Upload */}
           <div className="space-y-1.5 sm:space-y-2">
-            <Label htmlFor="club-image" className="text-sm">Club Image</Label>
+            <Label htmlFor="club-image" className="text-sm">Club Image (Landscape)</Label>
             {!imagePreview ? (
               <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 sm:p-6 text-center">
                 <input
                   type="file"
                   id="club-image"
-                  accept="image/*"
+                  accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
                   onChange={handleImageSelect}
                   className="hidden"
                 />
@@ -230,7 +262,7 @@ export const EditClubDialog = memo(function EditClubDialog({
                   <div className="flex flex-col items-center gap-1.5 sm:gap-2">
                     <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground" />
                     <span className="text-xs sm:text-sm text-muted-foreground">Click to upload club image</span>
-                    <span className="text-xs text-muted-foreground">Max 5MB</span>
+                    <span className="text-xs text-muted-foreground">JPG, JPEG, PNG, WEBP, or GIF • Max 5MB</span>
                   </div>
                 </label>
               </div>
@@ -251,6 +283,18 @@ export const EditClubDialog = memo(function EditClubDialog({
               </div>
             )}
           </div>
+
+          {/* Image Crop Dialog */}
+          {tempImageSrc && (
+            <ImageCropDialog
+              open={showCropDialog}
+              imageSrc={tempImageSrc}
+              onCropComplete={handleCropComplete}
+              onCancel={handleCropCancel}
+              aspectRatio={16 / 9}
+              cropShape="rect"
+            />
+          )}
 
           {/* Action Buttons */}
           <div className="flex gap-2 pt-2 sm:pt-4">

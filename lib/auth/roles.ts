@@ -138,16 +138,19 @@ export async function canManageLeadership(userId: string, clubId: string): Promi
 }
 
 /**
- * Check if user is a teacher/sponsor (based on user_type from Azure AD)
+ * Check if user is a teacher/sponsor (based on curated email list)
  */
 export async function isTeacher(userId: string): Promise<boolean> {
   try {
     const result = await db.query(
-      `SELECT user_type FROM users WHERE id = $1 LIMIT 1`,
+      `SELECT email FROM users WHERE id = $1 LIMIT 1`,
       [userId]
     )
-    // Teachers have user_type = 'None' in Azure AD
-    return result.rows.length > 0 && result.rows[0].user_type === "None"
+    if (result.rows.length === 0) return false
+    
+    // Import dynamically to avoid circular dependencies
+    const { isTeacherEmail } = await import("@/lib/teacher-verification")
+    return isTeacherEmail(result.rows[0].email)
   } catch (error) {
     console.error("Error checking teacher status:", error)
     return false

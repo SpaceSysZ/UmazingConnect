@@ -20,6 +20,8 @@ interface ImageCropDialogProps {
   imageSrc: string
   onCropComplete: (croppedFile: File) => void
   onCancel: () => void
+  aspectRatio?: number
+  cropShape?: "rect" | "round"
 }
 
 export function ImageCropDialog({
@@ -27,6 +29,8 @@ export function ImageCropDialog({
   imageSrc,
   onCropComplete,
   onCancel,
+  aspectRatio = 1,
+  cropShape = "rect",
 }: ImageCropDialogProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
@@ -68,7 +72,7 @@ export function ImageCropDialog({
         <DialogHeader>
           <DialogTitle>Crop Image</DialogTitle>
           <DialogDescription>
-            Adjust the image to fit your post. Drag to reposition and use the slider to zoom.
+            Adjust the image to your liking. Drag to reposition and use the slider to zoom.
           </DialogDescription>
         </DialogHeader>
 
@@ -77,7 +81,8 @@ export function ImageCropDialog({
             image={imageSrc}
             crop={crop}
             zoom={zoom}
-            aspect={16 / 9}
+            aspect={aspectRatio}
+            cropShape={cropShape}
             onCropChange={onCropChange}
             onZoomChange={onZoomChange}
             onCropComplete={onCropCompleteCallback}

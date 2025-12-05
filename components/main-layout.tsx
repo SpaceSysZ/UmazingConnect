@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Navigation } from "@/components/navigation"
 import { HomeContent } from "@/components/home-content"
 import { ClubsContent } from "@/components/clubs-content"
@@ -11,8 +12,18 @@ import { LoginScreen } from "@/components/login-screen"
 type ActiveSection = "home" | "clubs"
 
 export function MainLayout() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
   const [activeSection, setActiveSection] = useState<ActiveSection>("home")
   const { user, isAuthenticated, isLoading, hasProfile, logout } = useAuth()
+
+  // Read section from URL on mount
+  useEffect(() => {
+    const section = searchParams.get("section") as ActiveSection
+    if (section === "clubs" || section === "home") {
+      setActiveSection(section)
+    }
+  }, [searchParams])
 
   // Show loading state
   if (isLoading) {
@@ -48,11 +59,17 @@ export function MainLayout() {
     }
   }
 
+  const handleSectionChange = (section: ActiveSection) => {
+    setActiveSection(section)
+    // Update URL to reflect current section
+    router.push(`/?section=${section}`, { scroll: false })
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation 
         activeSection={activeSection} 
-        onSectionChange={setActiveSection} 
+        onSectionChange={handleSectionChange} 
         user={user}
         onLogout={logout}
       />

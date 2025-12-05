@@ -229,9 +229,14 @@ export function ClubDetailPage({ clubId }: { clubId: string }) {
   return (
     <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-6">
       {/* Back Button */}
-      <Button variant="ghost" onClick={() => router.back()} className="mb-2 sm:mb-4 h-9 text-sm" size="sm">
+      <Button 
+        variant="ghost" 
+        onClick={() => router.push("/?section=clubs")} 
+        className="mb-2 sm:mb-4 h-9 text-sm" 
+        size="sm"
+      >
         <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-        Back
+        Back to Clubs
       </Button>
 
       {/* Hero Section */}
