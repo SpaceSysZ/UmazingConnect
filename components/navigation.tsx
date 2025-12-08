@@ -26,6 +26,8 @@ interface NavigationProps {
 export function Navigation({ activeSection, onSectionChange, user, onLogout }: NavigationProps) {
   const [isTeacher, setIsTeacher] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false)
 
   useEffect(() => {
     if (user?.email) {
@@ -35,6 +37,18 @@ export function Navigation({ activeSection, onSectionChange, user, onLogout }: N
         .catch(() => setIsTeacher(false))
     }
   }, [user?.email])
+
+  const handleOpenSettings = () => {
+    // Close dropdown first
+    setDropdownOpen(false)
+    setMobileDropdownOpen(false)
+    // Blur any active element to remove focus
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur()
+    }
+    // Open settings dialog after a brief delay
+    setTimeout(() => setSettingsOpen(true), 100)
+  }
 
   const navItems = [
     { id: "home" as const, label: "Home", icon: Home },
@@ -84,7 +98,7 @@ export function Navigation({ activeSection, onSectionChange, user, onLogout }: N
             {/* User menu - Desktop */}
             {user ? (
               <>
-                <DropdownMenu>
+                <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-9 w-9 sm:h-10 sm:w-10 rounded-full hidden md:flex">
                       <Avatar className="h-9 w-9 sm:h-10 sm:w-10">
@@ -112,7 +126,7 @@ export function Navigation({ activeSection, onSectionChange, user, onLogout }: N
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onSelect={(e) => {
                       e.preventDefault()
-                      setTimeout(() => setSettingsOpen(true), 0)
+                      handleOpenSettings()
                     }}>
                       <Settings className="mr-2 h-4 w-4" />
                       <span>Settings</span>
@@ -141,7 +155,7 @@ export function Navigation({ activeSection, onSectionChange, user, onLogout }: N
 
             {/* Mobile navigation menu */}
             <div className="md:hidden">
-              <DropdownMenu>
+              <DropdownMenu open={mobileDropdownOpen} onOpenChange={setMobileDropdownOpen}>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-9 w-9">
                     <div className="flex flex-col gap-1">
@@ -196,7 +210,7 @@ export function Navigation({ activeSection, onSectionChange, user, onLogout }: N
                   
                   <DropdownMenuItem onSelect={(e) => {
                     e.preventDefault()
-                    setTimeout(() => setSettingsOpen(true), 0)
+                    handleOpenSettings()
                   }}>
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
