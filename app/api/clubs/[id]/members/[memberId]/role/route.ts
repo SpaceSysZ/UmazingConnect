@@ -27,58 +27,40 @@ export async function PUT(
       )
     }
 
-    // Verify the updater is the president of the club
-    const presidentQuery = 'SELECT president_id FROM clubs WHERE id = $1'
-    const presidentResult = await pool.query(presidentQuery, [clubId])
+    // Verify the updater is a president of the club (supports co-presidency)
+    const presidentQuery = `
+      SELECT role FROM club_members 
+      WHERE club_id = $1 AND user_id = $2 AND role = 'president'
+    `
+    const presidentResult = await pool.query(presidentQuery, [clubId, updatedBy])
     
     if (presidentResult.rows.length === 0) {
       return NextResponse.json(
-        { success: false, error: 'Club not found' },
-        { status: 404 }
-      )
-    }
-
-    if (presidentResult.rows[0].president_id !== updatedBy) {
-      return NextResponse.json(
-        { success: false, error: 'Only the club president can update member roles' },
+        { success: false, error: 'Only club presidents can update member roles' },
         { status: 403 }
       )
     }
 
-    // If promoting to president, we need to handle the transfer
+    // Update member role (supports multiple presidents - co-presidency)
+    await pool.query(
+      'UPDATE club_members SET role = $1 WHERE club_id = $2 AND user_id = $3',
+      [role, clubId, memberId]
+    )
+    
+    // If promoting to president and this is the first president, update club's president_id
     if (role === 'president') {
-      await pool.query('BEGIN')
+      const currentPresidentCheck = await pool.query(
+        'SELECT president_id FROM clubs WHERE id = $1',
+        [clubId]
+      )
       
-      try {
-        // Update the old president to officer
-        await pool.query(
-          'UPDATE club_members SET role = $1 WHERE club_id = $2 AND user_id = $3',
-          ['officer', clubId, updatedBy]
-        )
-        
-        // Update the new president
-        await pool.query(
-          'UPDATE club_members SET role = $1 WHERE club_id = $2 AND user_id = $3',
-          ['president', clubId, memberId]
-        )
-        
-        // Update the club's president_id
+      // Only update president_id if it's not set (first president)
+      if (!currentPresidentCheck.rows[0].president_id) {
         await pool.query(
           'UPDATE clubs SET president_id = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
           [memberId, clubId]
         )
-        
-        await pool.query('COMMIT')
-      } catch (error) {
-        await pool.query('ROLLBACK')
-        throw error
       }
-    } else {
-      // Regular role update
-      await pool.query(
-        'UPDATE club_members SET role = $1 WHERE club_id = $2 AND user_id = $3',
-        [role, clubId, memberId]
-      )
     }
 
     return NextResponse.json({
