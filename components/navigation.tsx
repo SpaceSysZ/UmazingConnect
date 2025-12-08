@@ -110,7 +110,10 @@ export function Navigation({ activeSection, onSectionChange, user, onLogout }: N
                       </div>
                     </div>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
+                    <DropdownMenuItem onSelect={(e) => {
+                      e.preventDefault()
+                      setTimeout(() => setSettingsOpen(true), 0)
+                    }}>
                       <Settings className="mr-2 h-4 w-4" />
                       <span>Settings</span>
                     </DropdownMenuItem>
@@ -123,11 +126,13 @@ export function Navigation({ activeSection, onSectionChange, user, onLogout }: N
                 </DropdownMenu>
 
                 {/* Settings Dialog */}
-                <UserSettingsDialog
-                  open={settingsOpen}
-                  onOpenChange={setSettingsOpen}
-                  user={user}
-                />
+                {settingsOpen && (
+                  <UserSettingsDialog
+                    open={settingsOpen}
+                    onOpenChange={setSettingsOpen}
+                    user={user}
+                  />
+                )}
               </>
             ) : (
               // Show placeholder when no user (during loading or not authenticated)
@@ -189,7 +194,10 @@ export function Navigation({ activeSection, onSectionChange, user, onLogout }: N
                     <span>Notifications</span>
                   </DropdownMenuItem>
                   
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onSelect={(e) => {
+                    e.preventDefault()
+                    setTimeout(() => setSettingsOpen(true), 0)
+                  }}>
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
                   </DropdownMenuItem>
