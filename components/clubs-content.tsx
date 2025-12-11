@@ -359,7 +359,7 @@ export function ClubsContent() {
             ) : (
               <>
                 {club.is_joined && user?.id && (
-                  <>
+                  <div className="flex gap-2">
                     <CreatePostDialog
                       clubId={club.id}
                       clubName={club.name}
@@ -416,7 +416,7 @@ export function ClubsContent() {
                         </Dialog>
                       </>
                     )}
-                  </>
+                  </div>
                 )}
                 <Button
                   onClick={(e) => {

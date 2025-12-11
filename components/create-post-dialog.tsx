@@ -219,9 +219,10 @@ export const CreatePostDialog = memo(function CreatePostDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="flex-1">
+        <Button variant="outline" className="flex-1 min-w-0">
           <MessageSquare className="h-4 w-4 mr-2" />
-          Post
+          <span className="hidden xs:inline">Post</span>
+          <span className="xs:hidden">Post</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto w-[calc(100vw-2rem)] sm:w-full" onClick={(e) => e.stopPropagation()}>
