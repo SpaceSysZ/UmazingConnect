@@ -224,12 +224,12 @@ export const CreatePostDialog = memo(function CreatePostDialog({
           Post
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto w-[calc(100vw-2rem)] sm:w-full">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto w-[calc(100vw-2rem)] sm:w-full" onClick={(e) => e.stopPropagation()}>
         <DialogHeader>
           <DialogTitle className="text-base sm:text-lg">Create Post for {clubName}</DialogTitle>
           <DialogDescription className="text-xs sm:text-sm">Share an update with club members</DialogDescription>
         </DialogHeader>
-        <div className="space-y-3 sm:space-y-4">
+        <div className="space-y-3 sm:space-y-4" onClick={(e) => e.stopPropagation()}>
           <div className="space-y-1.5 sm:space-y-2">
             <Label htmlFor="post-content" className="text-sm">Post Content</Label>
             <Textarea
@@ -237,6 +237,8 @@ export const CreatePostDialog = memo(function CreatePostDialog({
               placeholder="What's happening in your club?"
               value={content}
               onChange={(e) => setContent(e.target.value)}
+              onKeyDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
               className="min-h-[100px] sm:min-h-[120px] text-sm"
             />
           </div>
