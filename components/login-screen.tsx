@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { GraduationCap, Users, BookOpen, MessageCircle, RefreshCw } from "lucide-react"
+import { MascotBanner } from "./mascot-banner"
 import { useAuth } from "@/contexts/auth-context"
 
 export function LoginScreen() {
@@ -47,6 +48,10 @@ export function LoginScreen() {
         {/* Left side - Branding and features */}
         <div className="space-y-6 sm:space-y-8">
           <div className="text-center lg:text-left">
+            {/* Mascot appears above the title on mobile */}
+            <div className="block sm:hidden mb-3">
+              <MascotBanner />
+            </div>
             <div className="flex items-center justify-center lg:justify-start gap-2 sm:gap-3 mb-4 sm:mb-6">
               <div className="p-2 sm:p-3 bg-primary rounded-xl">
                 <GraduationCap className="h-6 w-6 sm:h-8 sm:w-8 text-primary-foreground" />
