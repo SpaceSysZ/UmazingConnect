@@ -49,7 +49,7 @@ export function LoginScreen() {
         <div className="space-y-6 sm:space-y-8">
           <div className="text-center lg:text-left">
             {/* Mascot appears above the title on mobile */}
-            <div className="block sm:hidden mb-3">
+            <div className="block">
               <MascotBanner />
             </div>
             <div className="flex items-center justify-center lg:justify-start gap-2 sm:gap-3 mb-4 sm:mb-6">
