@@ -12,6 +12,17 @@ export const metadata: Metadata = {
   description:
     'Connect with your school community. Share updates, join clubs, and stay informed about campus life.',
   generator: 'v0.app',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'SchoolConnect',
+  },
+  icons: {
+    icon: '/icon-192.png',
+    shortcut: '/icon-192.png',
+    apple: '/apple-touch-icon.png',
+  },
 }
 
 export const viewport: Viewport = {
