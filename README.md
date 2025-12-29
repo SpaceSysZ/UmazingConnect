@@ -122,17 +122,6 @@ For support or questions:
 - Review the authentication flow documentation
 - Open an issue in the repository
 
-## 🔮 Roadmap
-
-- [ ] Backend API development
-- [ ] Database integration
-- [ ] Real-time features
-- [ ] Mobile app
-- [ ] Advanced club management
-- [ ] Event calendar integration
-- [ ] Push notifications
-- [ ] Analytics dashboard
-
 ---
 
 **Made with blue and white spirit for Berk Prep**
