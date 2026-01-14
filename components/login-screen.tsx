@@ -103,7 +103,7 @@ export function LoginScreen() {
             <CardHeader className="text-center space-y-2 sm:space-y-3">
               <div className="mx-auto w-fit">
                 <span className="inline-block px-3 py-1 bg-secondary text-secondary-foreground text-xs font-bold uppercase tracking-widest border-2 border-foreground transform -rotate-2">
-                  Go Bears!
+                  Go Bucs!
                 </span>
               </div>
               <CardTitle className="text-2xl sm:text-3xl">Welcome Back</CardTitle>
