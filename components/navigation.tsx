@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Home, Users, Bell, GraduationCap, Settings, LogOut } from "lucide-react"
+import { Home, Users, Bell, GraduationCap, Settings, LogOut, Menu } from "lucide-react"
 import { UserProfile } from "@/lib/auth-config"
 import { UserSettingsDialog } from "./user-settings-dialog"
 
@@ -56,19 +56,23 @@ export function Navigation({ activeSection, onSectionChange, user, onLogout }: N
   ]
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background border-b-2 border-foreground">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16">
           {/* Logo and brand */}
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="p-1.5 sm:p-2 bg-primary rounded-lg">
+            <div className="p-1.5 sm:p-2 bg-primary border-2 border-foreground shadow-brutal-sm">
               <GraduationCap className="h-5 w-5 sm:h-6 sm:w-6 text-primary-foreground" />
             </div>
-            <span className="text-base sm:text-xl font-bold text-foreground">SchoolConnect</span>
+            <div>
+              <span className="text-base sm:text-xl font-black text-foreground tracking-tight">
+                BERK<span className="text-secondary">CONNECT</span>
+              </span>
+            </div>
           </div>
 
           {/* Navigation items - Desktop only */}
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden md:flex items-center gap-2">
             {navItems.map((item) => {
               const Icon = item.icon
               const isActive = activeSection === item.id
@@ -76,8 +80,8 @@ export function Navigation({ activeSection, onSectionChange, user, onLogout }: N
               return (
                 <Button
                   key={item.id}
-                  variant={isActive ? "default" : "ghost"}
-                  className={`gap-2 ${isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  variant={isActive ? "default" : "outline"}
+                  className={`gap-2 ${isActive ? "" : "bg-background"}`}
                   onClick={() => onSectionChange(item.id)}
                 >
                   <Icon className="h-4 w-4" />
@@ -88,11 +92,13 @@ export function Navigation({ activeSection, onSectionChange, user, onLogout }: N
           </div>
 
           {/* Right side actions */}
-          <div className="flex items-center gap-1.5 sm:gap-3">
-            {/* Notifications - Hidden on small mobile */}
-            <Button variant="ghost" size="icon" className="relative hidden xs:flex h-9 w-9 sm:h-10 sm:w-10">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Notifications */}
+            <Button variant="outline" size="icon" className="relative hidden xs:flex h-9 w-9 sm:h-10 sm:w-10 bg-background">
               <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
-              <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 h-2.5 w-2.5 sm:h-3 sm:w-3 bg-primary rounded-full text-xs"></span>
+              <span className="absolute -top-1 -right-1 h-3 w-3 sm:h-4 sm:w-4 bg-secondary border-2 border-foreground flex items-center justify-center text-[8px] font-bold text-secondary-foreground">
+                3
+              </span>
             </Button>
 
             {/* User menu - Desktop */}
@@ -100,39 +106,43 @@ export function Navigation({ activeSection, onSectionChange, user, onLogout }: N
               <>
                 <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-9 w-9 sm:h-10 sm:w-10 rounded-full hidden md:flex">
-                      <Avatar className="h-9 w-9 sm:h-10 sm:w-10">
+                    <Button variant="ghost" className="relative h-10 w-10 sm:h-11 sm:w-11 p-0 hidden md:flex border-2 border-foreground shadow-brutal-sm hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-brutal transition-all">
+                      <Avatar className="h-full w-full">
                         <AvatarImage src={user.profilePicture || "/placeholder-user.jpg"} alt="Profile" />
-                        <AvatarFallback className="bg-primary text-primary-foreground text-xs sm:text-sm">
+                        <AvatarFallback className="bg-primary text-primary-foreground text-xs sm:text-sm font-bold">
                           {user.name?.split(" ").map(n => n[0]).join("") || "U"}
                         </AvatarFallback>
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" align="end" forceMount>
-                    <div className="flex flex-col space-y-1 p-2">
-                      <p className="text-sm font-medium leading-none">{user.name || "User"}</p>
-                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                      <div className="flex items-center gap-2 mt-1">
+                  <DropdownMenuContent className="w-56 border-2 border-foreground shadow-brutal" align="end" forceMount>
+                    <div className="flex flex-col space-y-1 p-3 bg-secondary/10 border-b-2 border-foreground -m-1 mb-1">
+                      <p className="text-sm font-bold leading-none uppercase">{user.name || "User"}</p>
+                      <p className="text-xs leading-none text-muted-foreground font-medium">{user.email}</p>
+                      <div className="flex items-center gap-2 mt-2">
                         {isTeacher ? (
-                          <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full font-medium">
+                          <span className="text-xs px-2 py-0.5 bg-primary text-primary-foreground border border-foreground font-bold uppercase">
                             Teacher
                           </span>
                         ) : (
-                          <p className="text-xs leading-none text-muted-foreground capitalize">{user.role}</p>
+                          <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground border border-foreground/30 font-bold uppercase">
+                            {user.role}
+                          </span>
                         )}
                       </div>
                     </div>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onSelect={(e) => {
-                      e.preventDefault()
-                      handleOpenSettings()
-                    }}>
+                    <DropdownMenuItem
+                      className="font-bold uppercase text-xs tracking-wide cursor-pointer"
+                      onSelect={(e) => {
+                        e.preventDefault()
+                        handleOpenSettings()
+                      }}
+                    >
                       <Settings className="mr-2 h-4 w-4" />
                       <span>Settings</span>
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={onLogout}>
+                    <DropdownMenuSeparator className="bg-foreground/20" />
+                    <DropdownMenuItem onClick={onLogout} className="font-bold uppercase text-xs tracking-wide cursor-pointer text-destructive focus:text-destructive">
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Log out</span>
                     </DropdownMenuItem>
@@ -150,41 +160,36 @@ export function Navigation({ activeSection, onSectionChange, user, onLogout }: N
               </>
             ) : (
               // Show placeholder when no user (during loading or not authenticated)
-              <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-muted animate-pulse hidden md:block" />
+              <div className="h-10 w-10 sm:h-11 sm:w-11 bg-muted border-2 border-foreground animate-pulse hidden md:block" />
             )}
 
             {/* Mobile navigation menu */}
             <div className="md:hidden">
               <DropdownMenu open={mobileDropdownOpen} onOpenChange={setMobileDropdownOpen}>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9">
-                    <div className="flex flex-col gap-1">
-                      <div className="w-4 h-0.5 bg-current"></div>
-                      <div className="w-4 h-0.5 bg-current"></div>
-                      <div className="w-4 h-0.5 bg-current"></div>
-                    </div>
+                  <Button variant="outline" size="icon" className="h-9 w-9 bg-background">
+                    <Menu className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end">
+                <DropdownMenuContent className="w-56 border-2 border-foreground shadow-brutal" align="end">
                   {/* User info on mobile */}
                   {user && (
                     <>
-                      <div className="flex items-center gap-3 p-2">
-                        <Avatar className="h-10 w-10">
+                      <div className="flex items-center gap-3 p-3 bg-secondary/10 border-b-2 border-foreground -m-1 mb-1">
+                        <Avatar className="h-10 w-10 border-2 border-foreground">
                           <AvatarImage src={user.profilePicture || "/placeholder-user.jpg"} alt="Profile" />
-                          <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                          <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
                             {user.name?.split(" ").map(n => n[0]).join("") || "U"}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium leading-none truncate">{user.name || "User"}</p>
+                          <p className="text-sm font-bold leading-none truncate uppercase">{user.name || "User"}</p>
                           <p className="text-xs leading-none text-muted-foreground mt-1 truncate">{user.email}</p>
                         </div>
                       </div>
-                      <DropdownMenuSeparator />
                     </>
                   )}
-                  
+
                   {/* Navigation items */}
                   {navItems.map((item) => {
                     const Icon = item.icon
@@ -192,33 +197,39 @@ export function Navigation({ activeSection, onSectionChange, user, onLogout }: N
                       <DropdownMenuItem
                         key={item.id}
                         onClick={() => onSectionChange(item.id)}
-                        className={activeSection === item.id ? "bg-accent" : ""}
+                        className={`font-bold uppercase text-xs tracking-wide cursor-pointer ${activeSection === item.id ? "bg-secondary text-secondary-foreground" : ""}`}
                       >
                         <Icon className="mr-2 h-4 w-4" />
                         <span>{item.label}</span>
                       </DropdownMenuItem>
                     )
                   })}
-                  
-                  <DropdownMenuSeparator />
-                  
+
+                  <DropdownMenuSeparator className="bg-foreground/20" />
+
                   {/* Mobile-only menu items */}
-                  <DropdownMenuItem>
+                  <DropdownMenuItem className="font-bold uppercase text-xs tracking-wide cursor-pointer">
                     <Bell className="mr-2 h-4 w-4" />
                     <span>Notifications</span>
+                    <span className="ml-auto px-1.5 py-0.5 bg-secondary text-secondary-foreground text-[10px] font-bold border border-foreground">
+                      3
+                    </span>
                   </DropdownMenuItem>
-                  
-                  <DropdownMenuItem onSelect={(e) => {
-                    e.preventDefault()
-                    handleOpenSettings()
-                  }}>
+
+                  <DropdownMenuItem
+                    className="font-bold uppercase text-xs tracking-wide cursor-pointer"
+                    onSelect={(e) => {
+                      e.preventDefault()
+                      handleOpenSettings()
+                    }}
+                  >
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
                   </DropdownMenuItem>
-                  
-                  <DropdownMenuSeparator />
-                  
-                  <DropdownMenuItem onClick={onLogout}>
+
+                  <DropdownMenuSeparator className="bg-foreground/20" />
+
+                  <DropdownMenuItem onClick={onLogout} className="font-bold uppercase text-xs tracking-wide cursor-pointer text-destructive focus:text-destructive">
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
                   </DropdownMenuItem>
