@@ -174,7 +174,7 @@ export function ManageLeadershipDialog({ clubId, clubName, currentUserId, isPres
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
-      case 'president': return 'bg-yellow-100 text-yellow-800'
+      case 'president': return 'bg-sky-100 text-sky-800'
       case 'vice_president': return 'bg-blue-100 text-blue-800'
       case 'officer': return 'bg-green-100 text-green-800'
       default: return 'bg-gray-100 text-gray-800'

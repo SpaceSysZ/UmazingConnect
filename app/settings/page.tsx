@@ -83,7 +83,7 @@ export default function SettingsPage() {
   const getUserRoleColor = () => {
     if (stats?.isCoordinator) return "bg-purple-100 text-purple-800"
     if (stats?.isSponsor) return "bg-blue-100 text-blue-800"
-    if (stats?.isPresident) return "bg-yellow-100 text-yellow-800"
+    if (stats?.isPresident) return "bg-sky-100 text-sky-800"
     if (stats?.isOfficer) return "bg-green-100 text-green-800"
     return "bg-gray-100 text-gray-800"
   }
@@ -224,7 +224,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="text-center p-4 bg-muted rounded-lg">
-                  <Crown className="h-6 w-6 mx-auto mb-2 text-yellow-600" />
+                  <Crown className="h-6 w-6 mx-auto mb-2 text-sky-600" />
                   <p className="text-2xl font-bold">{stats?.clubsPresidentOf || 0}</p>
                   <p className="text-xs text-muted-foreground">President Of</p>
                 </div>

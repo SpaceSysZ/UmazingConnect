@@ -25,12 +25,12 @@ export function DevModeBanner() {
   if (!show) return null
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[100] bg-yellow-500 text-yellow-900 px-3 py-2 text-xs sm:text-sm">
+    <div className="fixed top-0 left-0 right-0 z-[100] bg-sky-500 text-sky-900 px-3 py-2 text-xs sm:text-sm">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <AlertTriangle className="h-4 w-4 flex-shrink-0" />
           <span className="truncate">
-            <strong>Development Mode:</strong> Testing over HTTP. 
+            <strong>Development Mode:</strong> Testing over HTTP.
             <span className="hidden sm:inline"> Authentication may be limited. Use ngrok for full testing.</span>
           </span>
         </div>
@@ -39,7 +39,7 @@ export function DevModeBanner() {
             setDismissed(true)
             setShow(false)
           }}
-          className="flex-shrink-0 hover:bg-yellow-600 rounded p-1"
+          className="flex-shrink-0 hover:bg-sky-600 rounded p-1"
           aria-label="Dismiss"
         >
           <X className="h-4 w-4" />

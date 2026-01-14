@@ -145,7 +145,7 @@ const categoryColors = {
   clothing: "bg-purple-100 text-purple-800",
   books: "bg-green-100 text-green-800",
   accessories: "bg-orange-100 text-orange-800",
-  keys: "bg-yellow-100 text-yellow-800",
+  keys: "bg-sky-100 text-sky-800",
   other: "bg-gray-100 text-gray-800",
 }
 

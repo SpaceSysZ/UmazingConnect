@@ -107,9 +107,9 @@ export function ClaimClubDialog({
         </DialogHeader>
 
         <div className="space-y-3 sm:space-y-4">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2.5 sm:p-3 flex items-start gap-2">
-            <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-            <div className="text-xs sm:text-sm text-yellow-800">
+          <div className="bg-sky-50 border border-sky-200 rounded-lg p-2.5 sm:p-3 flex items-start gap-2">
+            <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-sky-600 mt-0.5 flex-shrink-0" />
+            <div className="text-xs sm:text-sm text-sky-800">
               <p className="font-medium">Important:</p>
               <p>Only claim this club if you are actually the president or have permission to manage it.</p>
             </div>

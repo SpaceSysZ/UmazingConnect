@@ -4,11 +4,11 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Neo-Brutalist Berkeley Color Palette */
-  /* Berkeley Blue: #003262, Berkeley Gold: #FDB515 */
+  /* Neo-Brutalist Berkeley Prep Color Palette */
+  /* Navy: #003262, Light Blue: #5DADE2, White */
 
-  --background: oklch(0.98 0.005 85); /* Warm off-white cream */
-  --foreground: oklch(0.15 0.03 258); /* Deep Berkeley blue-black */
+  --background: oklch(0.98 0.01 230); /* Cool off-white */
+  --foreground: oklch(0.15 0.03 258); /* Deep navy-black */
 
   --card: oklch(1 0 0); /* Pure white cards */
   --card-foreground: oklch(0.15 0.03 258);
@@ -16,19 +16,19 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.15 0.03 258);
 
-  /* Berkeley Blue Primary */
-  --primary: oklch(0.30 0.12 258); /* Deep Berkeley Blue #003262 */
+  /* Navy Primary */
+  --primary: oklch(0.30 0.12 258); /* Deep Navy #003262 */
   --primary-foreground: oklch(1 0 0);
 
-  /* Berkeley Gold Secondary */
-  --secondary: oklch(0.82 0.18 85); /* Berkeley Gold #FDB515 */
+  /* Light Blue Secondary */
+  --secondary: oklch(0.70 0.12 230); /* Light Blue */
   --secondary-foreground: oklch(0.15 0.03 258);
 
-  --muted: oklch(0.94 0.01 85); /* Warm gray */
+  --muted: oklch(0.94 0.01 230); /* Cool gray */
   --muted-foreground: oklch(0.45 0.02 258);
 
-  /* Gold accent for highlights */
-  --accent: oklch(0.82 0.18 85); /* Berkeley Gold */
+  /* Light blue accent for highlights */
+  --accent: oklch(0.70 0.12 230); /* Light Blue */
   --accent-foreground: oklch(0.15 0.03 258);
 
   --destructive: oklch(0.55 0.22 25);
@@ -37,13 +37,13 @@
   /* Neo-brutalist thick borders */
   --border: oklch(0.15 0.03 258); /* Dark borders - key to neo-brutalism */
   --input: oklch(1 0 0);
-  --ring: oklch(0.82 0.18 85); /* Gold focus ring */
+  --ring: oklch(0.70 0.12 230); /* Light blue focus ring */
 
-  /* Chart colors with Berkeley palette */
-  --chart-1: oklch(0.30 0.12 258); /* Berkeley Blue */
-  --chart-2: oklch(0.82 0.18 85); /* Berkeley Gold */
-  --chart-3: oklch(0.50 0.15 258); /* Lighter blue */
-  --chart-4: oklch(0.70 0.15 85); /* Darker gold */
+  /* Chart colors with Berkeley Prep palette */
+  --chart-1: oklch(0.30 0.12 258); /* Navy */
+  --chart-2: oklch(0.70 0.12 230); /* Light Blue */
+  --chart-3: oklch(0.50 0.15 258); /* Medium blue */
+  --chart-4: oklch(0.60 0.10 230); /* Softer blue */
   --chart-5: oklch(0.40 0.10 258);
 
   /* Neo-brutalist design tokens */
@@ -51,70 +51,70 @@
   --shadow-brutal: 4px 4px 0px 0px oklch(0.15 0.03 258); /* Hard offset shadow */
   --shadow-brutal-sm: 2px 2px 0px 0px oklch(0.15 0.03 258);
   --shadow-brutal-lg: 6px 6px 0px 0px oklch(0.15 0.03 258);
-  --shadow-brutal-gold: 4px 4px 0px 0px oklch(0.82 0.18 85);
+  --shadow-brutal-accent: 4px 4px 0px 0px oklch(0.70 0.12 230);
   --border-width: 2px;
 
-  /* Sidebar with Berkeley colors */
-  --sidebar: oklch(0.30 0.12 258); /* Berkeley Blue sidebar */
+  /* Sidebar with Berkeley Prep colors */
+  --sidebar: oklch(0.30 0.12 258); /* Navy sidebar */
   --sidebar-foreground: oklch(1 0 0);
-  --sidebar-primary: oklch(0.82 0.18 85); /* Gold primary on blue */
+  --sidebar-primary: oklch(0.70 0.12 230); /* Light blue primary on navy */
   --sidebar-primary-foreground: oklch(0.15 0.03 258);
   --sidebar-accent: oklch(0.40 0.10 258);
   --sidebar-accent-foreground: oklch(1 0 0);
   --sidebar-border: oklch(0.40 0.10 258);
-  --sidebar-ring: oklch(0.82 0.18 85 / 0.5);
+  --sidebar-ring: oklch(0.70 0.12 230 / 0.5);
 }
 
 .dark {
-  /* Dark mode Berkeley theme */
-  --background: oklch(0.12 0.03 258); /* Deep Berkeley blue background */
-  --foreground: oklch(0.95 0.01 85); /* Warm white text */
+  /* Dark mode Berkeley Prep theme */
+  --background: oklch(0.12 0.03 258); /* Deep navy background */
+  --foreground: oklch(0.95 0.01 230); /* Cool white text */
 
   --card: oklch(0.18 0.04 258);
-  --card-foreground: oklch(0.95 0.01 85);
+  --card-foreground: oklch(0.95 0.01 230);
 
   --popover: oklch(0.18 0.04 258);
-  --popover-foreground: oklch(0.95 0.01 85);
+  --popover-foreground: oklch(0.95 0.01 230);
 
-  --primary: oklch(0.82 0.18 85); /* Gold becomes primary in dark */
+  --primary: oklch(0.70 0.12 230); /* Light blue becomes primary in dark */
   --primary-foreground: oklch(0.12 0.03 258);
 
-  --secondary: oklch(0.40 0.12 258); /* Lighter blue secondary */
-  --secondary-foreground: oklch(0.95 0.01 85);
+  --secondary: oklch(0.40 0.12 258); /* Medium blue secondary */
+  --secondary-foreground: oklch(0.95 0.01 230);
 
   --muted: oklch(0.22 0.04 258);
-  --muted-foreground: oklch(0.70 0.03 85);
+  --muted-foreground: oklch(0.70 0.03 230);
 
-  --accent: oklch(0.82 0.18 85);
+  --accent: oklch(0.70 0.12 230);
   --accent-foreground: oklch(0.12 0.03 258);
 
   --destructive: oklch(0.55 0.22 25);
-  --destructive-foreground: oklch(0.95 0.01 85);
+  --destructive-foreground: oklch(0.95 0.01 230);
 
   --border: oklch(0.40 0.08 258); /* Visible borders in dark */
   --input: oklch(0.22 0.04 258);
-  --ring: oklch(0.82 0.18 85 / 0.5);
+  --ring: oklch(0.70 0.12 230 / 0.5);
 
-  --chart-1: oklch(0.82 0.18 85);
+  --chart-1: oklch(0.70 0.12 230);
   --chart-2: oklch(0.50 0.15 258);
-  --chart-3: oklch(0.70 0.15 85);
+  --chart-3: oklch(0.60 0.10 230);
   --chart-4: oklch(0.60 0.12 258);
-  --chart-5: oklch(0.75 0.12 85);
+  --chart-5: oklch(0.75 0.10 230);
 
   /* Dark mode shadows */
-  --shadow-brutal: 4px 4px 0px 0px oklch(0.82 0.18 85);
-  --shadow-brutal-sm: 2px 2px 0px 0px oklch(0.82 0.18 85);
-  --shadow-brutal-lg: 6px 6px 0px 0px oklch(0.82 0.18 85);
-  --shadow-brutal-gold: 4px 4px 0px 0px oklch(0.30 0.12 258);
+  --shadow-brutal: 4px 4px 0px 0px oklch(0.70 0.12 230);
+  --shadow-brutal-sm: 2px 2px 0px 0px oklch(0.70 0.12 230);
+  --shadow-brutal-lg: 6px 6px 0px 0px oklch(0.70 0.12 230);
+  --shadow-brutal-accent: 4px 4px 0px 0px oklch(0.30 0.12 258);
 
   --sidebar: oklch(0.15 0.04 258);
-  --sidebar-foreground: oklch(0.95 0.01 85);
-  --sidebar-primary: oklch(0.82 0.18 85);
+  --sidebar-foreground: oklch(0.95 0.01 230);
+  --sidebar-primary: oklch(0.70 0.12 230);
   --sidebar-primary-foreground: oklch(0.12 0.03 258);
   --sidebar-accent: oklch(0.25 0.05 258);
-  --sidebar-accent-foreground: oklch(0.95 0.01 85);
+  --sidebar-accent-foreground: oklch(0.95 0.01 230);
   --sidebar-border: oklch(0.30 0.06 258);
-  --sidebar-ring: oklch(0.82 0.18 85 / 0.5);
+  --sidebar-ring: oklch(0.70 0.12 230 / 0.5);
 }
 
 @theme inline {
@@ -229,8 +229,8 @@
     box-shadow: var(--shadow-brutal-lg);
   }
 
-  .shadow-brutal-gold {
-    box-shadow: var(--shadow-brutal-gold);
+  .shadow-brutal-accent {
+    box-shadow: var(--shadow-brutal-accent);
   }
 
   /* Hover lift effect */
@@ -249,11 +249,11 @@
   }
 
   .dark .hover-brutal:hover {
-    box-shadow: 6px 6px 0px 0px oklch(0.82 0.18 85);
+    box-shadow: 6px 6px 0px 0px oklch(0.70 0.12 230);
   }
 
   .dark .hover-brutal:active {
-    box-shadow: 2px 2px 0px 0px oklch(0.82 0.18 85);
+    box-shadow: 2px 2px 0px 0px oklch(0.70 0.12 230);
   }
 
   /* Thick border utility */
@@ -267,21 +267,21 @@
     border-color: var(--border);
   }
 
-  /* Berkeley brand colors */
-  .bg-berkeley-blue {
+  /* Berkeley Prep brand colors */
+  .bg-berkeley-navy {
     background-color: oklch(0.30 0.12 258);
   }
 
-  .bg-berkeley-gold {
-    background-color: oklch(0.82 0.18 85);
+  .bg-berkeley-lightblue {
+    background-color: oklch(0.70 0.12 230);
   }
 
-  .text-berkeley-blue {
+  .text-berkeley-navy {
     color: oklch(0.30 0.12 258);
   }
 
-  .text-berkeley-gold {
-    color: oklch(0.82 0.18 85);
+  .text-berkeley-lightblue {
+    color: oklch(0.70 0.12 230);
   }
 
   /* Decorative stripe pattern */
@@ -290,8 +290,8 @@
       45deg,
       transparent,
       transparent 10px,
-      oklch(0.82 0.18 85 / 0.1) 10px,
-      oklch(0.82 0.18 85 / 0.1) 20px
+      oklch(0.70 0.12 230 / 0.1) 10px,
+      oklch(0.70 0.12 230 / 0.1) 20px
     );
   }
 

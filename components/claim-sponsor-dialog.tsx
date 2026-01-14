@@ -152,9 +152,9 @@ export function ClaimSponsorDialog({
             </div>
           )}
 
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2.5 sm:p-3 flex items-start gap-2">
-            <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-            <div className="text-xs sm:text-sm text-yellow-800">
+          <div className="bg-sky-50 border border-sky-200 rounded-lg p-2.5 sm:p-3 flex items-start gap-2">
+            <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-sky-600 mt-0.5 flex-shrink-0" />
+            <div className="text-xs sm:text-sm text-sky-800">
               <p className="font-medium">Sponsor Role:</p>
               <p>As a sponsor, you will oversee the club but not manage day-to-day operations. You will approve leadership changes and moderate content.</p>
             </div>
