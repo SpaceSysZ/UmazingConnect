@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { GraduationCap, Users, BookOpen, MessageCircle, RefreshCw, Zap } from "lucide-react"
+import { GraduationCap, Users, BookOpen, MessageCircle, RefreshCw, Zap, Heart } from "lucide-react"
 import { MascotBanner } from "./mascot-banner"
 import { useAuth } from "@/contexts/auth-context"
 
@@ -154,8 +154,8 @@ export function LoginScreen() {
       {/* Decorative elements */}
       <div className="fixed bottom-4 left-4 hidden lg:block">
         <div className="flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground border-2 border-foreground shadow-brutal text-xs font-bold uppercase">
-          <Zap className="h-4 w-4" />
-          Berkeley Class of 2025
+          <Heart className="h-4 w-4" />
+            Made with ❤️ aris and BpsCSC
         </div>
       </div>
     </div>
