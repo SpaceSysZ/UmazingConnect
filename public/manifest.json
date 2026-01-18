@@ -8,6 +8,7 @@
   "orientation": "portrait-primary",
   "background_color": "#ffffff",
   "theme_color": "#000000",
+  "permissions": ["notifications"],
   "icons": [
     {
       "src": "/icon-192.png",

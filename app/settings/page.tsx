@@ -7,19 +7,20 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { 
-  User, 
-  Shield, 
-  Crown, 
-  Users, 
-  FileText, 
+import {
+  User,
+  Shield,
+  Crown,
+  Users,
+  FileText,
   Heart,
   Settings as SettingsIcon,
   Mail,
   Calendar,
   Award,
   Building,
-  ArrowLeft
+  ArrowLeft,
+  Bell
 } from "lucide-react"
 import Link from "next/link"
 
@@ -277,6 +278,13 @@ export default function SettingsPage() {
           <CardTitle>Quick Actions</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
+          <Link href="/notifications">
+            <Button variant="outline" className="w-full justify-start">
+              <Bell className="h-4 w-4 mr-2" />
+              Notifications & Preferences
+            </Button>
+          </Link>
+
           {stats?.isSponsor && (
             <Link href="/sponsor">
               <Button variant="outline" className="w-full justify-start">
@@ -285,7 +293,7 @@ export default function SettingsPage() {
               </Button>
             </Link>
           )}
-          
+
           {stats?.isCoordinator && (
             <Link href="/admin">
               <Button variant="outline" className="w-full justify-start">

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -13,6 +13,7 @@ import {
 import { Home, Users, Bell, GraduationCap, Settings, LogOut, Menu } from "lucide-react"
 import { UserProfile } from "@/lib/auth-config"
 import { UserSettingsDialog } from "./user-settings-dialog"
+import Link from "next/link"
 
 type ActiveSection = "home" | "clubs"
 
@@ -28,6 +29,20 @@ export function Navigation({ activeSection, onSectionChange, user, onLogout }: N
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false)
+  const [notificationCount, setNotificationCount] = useState(0)
+
+  const fetchNotificationCount = useCallback(async () => {
+    if (!user?.id) return
+    try {
+      const response = await fetch(`/api/notifications/count?userId=${user.id}`)
+      if (response.ok) {
+        const data = await response.json()
+        setNotificationCount(data.count || 0)
+      }
+    } catch (error) {
+      console.error('Error fetching notification count:', error)
+    }
+  }, [user?.id])
 
   useEffect(() => {
     if (user?.email) {
@@ -37,6 +52,13 @@ export function Navigation({ activeSection, onSectionChange, user, onLogout }: N
         .catch(() => setIsTeacher(false))
     }
   }, [user?.email])
+
+  useEffect(() => {
+    fetchNotificationCount()
+    // Poll for new notifications every 30 seconds
+    const interval = setInterval(fetchNotificationCount, 30000)
+    return () => clearInterval(interval)
+  }, [fetchNotificationCount])
 
   const handleOpenSettings = () => {
     // Close dropdown first
@@ -94,12 +116,16 @@ export function Navigation({ activeSection, onSectionChange, user, onLogout }: N
           {/* Right side actions */}
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Notifications */}
-            <Button variant="outline" size="icon" className="relative hidden xs:flex h-9 w-9 sm:h-10 sm:w-10 bg-background">
-              <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
-              <span className="absolute -top-1 -right-1 h-3 w-3 sm:h-4 sm:w-4 bg-secondary border-2 border-foreground flex items-center justify-center text-[8px] font-bold text-secondary-foreground">
-                3
-              </span>
-            </Button>
+            <Link href="/notifications">
+              <Button variant="outline" size="icon" className="relative hidden xs:flex h-9 w-9 sm:h-10 sm:w-10 bg-background">
+                <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
+                {notificationCount > 0 && (
+                  <span className="absolute -top-1 -right-1 h-3 w-3 sm:h-4 sm:w-4 bg-secondary border-2 border-foreground flex items-center justify-center text-[8px] font-bold text-secondary-foreground">
+                    {notificationCount > 9 ? '9+' : notificationCount}
+                  </span>
+                )}
+              </Button>
+            </Link>
 
             {/* User menu - Desktop */}
             {user ? (
@@ -208,13 +234,17 @@ export function Navigation({ activeSection, onSectionChange, user, onLogout }: N
                   <DropdownMenuSeparator className="bg-foreground/20" />
 
                   {/* Mobile-only menu items */}
-                  <DropdownMenuItem className="font-bold uppercase text-xs tracking-wide cursor-pointer">
-                    <Bell className="mr-2 h-4 w-4" />
-                    <span>Notifications</span>
-                    <span className="ml-auto px-1.5 py-0.5 bg-secondary text-secondary-foreground text-[10px] font-bold border border-foreground">
-                      3
-                    </span>
-                  </DropdownMenuItem>
+                  <Link href="/notifications">
+                    <DropdownMenuItem className="font-bold uppercase text-xs tracking-wide cursor-pointer">
+                      <Bell className="mr-2 h-4 w-4" />
+                      <span>Notifications</span>
+                      {notificationCount > 0 && (
+                        <span className="ml-auto px-1.5 py-0.5 bg-secondary text-secondary-foreground text-[10px] font-bold border border-foreground">
+                          {notificationCount > 9 ? '9+' : notificationCount}
+                        </span>
+                      )}
+                    </DropdownMenuItem>
+                  </Link>
 
                   <DropdownMenuItem
                     className="font-bold uppercase text-xs tracking-wide cursor-pointer"

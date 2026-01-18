@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import pool from '@/lib/db'
 import { checkPostRateLimit } from '@/lib/security/input-validator'
 import { getClientIdentifier } from '@/lib/security/api-middleware'
+import { createNotificationsForClubMembers } from '@/lib/services/notifications'
 
 // GET /api/clubs/[id]/posts - Get all posts for a club
 export async function GET(
@@ -153,6 +154,25 @@ export async function POST(
       author_avatar: author.avatar_url,
       author_email: author.email,
       isLiked: false,
+    }
+
+    // Get club name for notification
+    const clubResult = await pool.query('SELECT name FROM clubs WHERE id = $1', [clubId])
+    const clubName = clubResult.rows[0]?.name || 'A club'
+
+    // Create notifications for club members (except the poster)
+    try {
+      await createNotificationsForClubMembers(
+        clubId,
+        post.id,
+        'new_post',
+        `New post in ${clubName}`,
+        content.trim().substring(0, 100) + (content.trim().length > 100 ? '...' : ''),
+        userId // Exclude the poster from notifications
+      )
+    } catch (notifError) {
+      // Don't fail the post creation if notifications fail
+      console.error('Error creating notifications:', notifError)
     }
 
     return NextResponse.json({

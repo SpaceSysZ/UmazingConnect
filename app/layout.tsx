@@ -6,6 +6,7 @@ import './globals.css'
 import { AuthProvider } from '@/contexts/auth-context'
 import { ThemeProvider } from '@/components/theme-provider'
 import { DevModeBanner } from '@/components/dev-mode-banner'
+import { ServiceWorkerRegister } from '@/components/service-worker-register'
 
 export const metadata: Metadata = {
   title: 'SchoolConnect - Berkeley Prep',
@@ -45,6 +46,7 @@ export default function RootLayout({
       {/* ✅ Apply deterministic, precomputed font vars */}
       <body className={`font-sans ${fontVars}`} suppressHydrationWarning>
         <DevModeBanner />
+        <ServiceWorkerRegister />
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
