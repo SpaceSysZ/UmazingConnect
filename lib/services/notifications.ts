@@ -1,4 +1,5 @@
 import pool from '@/lib/db'
+import { sendPushToUser, PushPayload } from './push'
 
 interface CreateNotificationOptions {
   userId: string
@@ -70,6 +71,20 @@ export async function createNotificationsForClubMembers(
           body,
         })
         notifications.push(notification)
+
+        // Send push notification to user's devices (non-blocking)
+        const pushPayload: PushPayload = {
+          title,
+          body,
+          url: `/clubs/${clubId}`,
+          clubId,
+          postId,
+          notificationId: notification.id,
+          tag: `club-${clubId}-post`,
+        }
+        sendPushToUser(member.user_id, pushPayload).catch((err) => {
+          console.error('Push notification failed for user:', member.user_id, err)
+        })
       }
     }
 
