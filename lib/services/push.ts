@@ -46,7 +46,10 @@ export async function sendPushNotification(
   }
 
   try {
-    await webpush.sendNotification(subscription, JSON.stringify(payload))
+    await webpush.sendNotification(subscription, JSON.stringify(payload), {
+      TTL: 86400, // 24 hours - required by iOS/Safari
+      urgency: 'high', // Attempt immediate delivery (important for iOS)
+    })
     return true
   } catch (error: any) {
     // Handle specific error codes

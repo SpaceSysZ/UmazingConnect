@@ -22,45 +22,60 @@ self.addEventListener('activate', (event) => {
 })
 
 // Push event - handle incoming push notifications
+// IMPORTANT: iOS/Safari requires showing a notification immediately.
+// If we don't show one, Safari revokes push permission for the site.
 self.addEventListener('push', (event) => {
-  if (!event.data) {
-    return
+  // Default notification data - always have a fallback
+  let data = {
+    title: 'SchoolConnect',
+    body: 'New notification from SchoolConnect',
+    url: '/',
   }
 
-  try {
-    const data = event.data.json()
-
-    const options = {
-      body: data.body || 'New notification from SchoolConnect',
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
-      vibrate: [100, 50, 100],
-      data: {
-        url: data.url || '/',
-        notificationId: data.notificationId,
-        clubId: data.clubId,
-        postId: data.postId,
-      },
-      actions: [
-        {
-          action: 'open',
-          title: 'View',
-        },
-        {
-          action: 'dismiss',
-          title: 'Dismiss',
-        },
-      ],
-      tag: data.tag || 'schoolconnect-notification',
-      renotify: true,
+  // Try to parse push data if available
+  if (event.data) {
+    try {
+      const pushData = event.data.json()
+      data = { ...data, ...pushData }
+    } catch (error) {
+      // If JSON parsing fails, try to get text
+      try {
+        data.body = event.data.text() || data.body
+      } catch (e) {
+        // Use default data
+      }
     }
-
-    event.waitUntil(
-      self.registration.showNotification(data.title || 'SchoolConnect', options)
-    )
-  } catch (error) {
-    console.error('Error processing push notification:', error)
   }
+
+  const options = {
+    body: data.body,
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    vibrate: [100, 50, 100],
+    data: {
+      url: data.url || '/',
+      notificationId: data.notificationId,
+      clubId: data.clubId,
+      postId: data.postId,
+    },
+    actions: [
+      {
+        action: 'open',
+        title: 'View',
+      },
+      {
+        action: 'dismiss',
+        title: 'Dismiss',
+      },
+    ],
+    tag: data.tag || 'schoolconnect-notification',
+    renotify: true,
+  }
+
+  // ALWAYS show notification - never return without showing one on iOS
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  )
 })
 
 // Notification click event - handle user interaction
