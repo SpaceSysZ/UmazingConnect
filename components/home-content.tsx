@@ -48,7 +48,7 @@ export function HomeContent() {
       })
       const data = await response.json()
       if (data.success) {
-        alert(`Test notification sent! Sent: ${data.result.sent}, Failed: ${data.result.failed}`)
+        alert(`Test notification sent!\nSent: ${data.result.sent}, Failed: ${data.result.failed}\nSubscriptions in DB: ${data.debug?.subscriptionsInDb || 0}`)
       } else {
         alert(`Failed: ${data.error}`)
       }
