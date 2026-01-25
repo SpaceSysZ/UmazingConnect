@@ -73,15 +73,15 @@ interface PushSubscription {
 
 /**
  * Send a push notification to a single subscription
- * Returns true if successful, false if failed
+ * Returns { success: true } or { success: false, error: string }
  */
 export async function sendPushNotification(
   subscription: PushSubscription,
   payload: PushPayload
-): Promise<boolean> {
+): Promise<{ success: boolean; error?: string }> {
   if (!ensureVapidInitialized()) {
     console.warn('[Push] VAPID keys not configured, skipping push notification')
-    return false
+    return { success: false, error: 'VAPID not configured' }
   }
 
   try {
@@ -91,8 +91,9 @@ export async function sendPushNotification(
       urgency: 'high', // Attempt immediate delivery (important for iOS)
     })
     console.log('[Push] Send successful, status:', result.statusCode)
-    return true
+    return { success: true }
   } catch (error: any) {
+    const errorDetails = `${error.statusCode || 'no status'}: ${error.message || error.body || 'unknown error'}`
     console.error('[Push] Send failed:', {
       statusCode: error.statusCode,
       message: error.message,
@@ -105,7 +106,7 @@ export async function sendPushNotification(
       console.log('[Push] Removing invalid subscription:', subscription.endpoint)
       await removeSubscription(subscription.endpoint)
     }
-    return false
+    return { success: false, error: errorDetails }
   }
 }
 
@@ -153,11 +154,16 @@ export async function sendPushToUser(
 
     const errors: string[] = []
     results.forEach((r, i) => {
-      if (r.status === 'fulfilled' && r.value) {
+      if (r.status === 'fulfilled' && r.value?.success) {
         console.log('[Push] Success for subscription', i)
         result.sent++
+      } else if (r.status === 'fulfilled' && !r.value?.success) {
+        const errorMsg = r.value?.error || 'unknown error'
+        console.log('[Push] Failed for subscription', i, errorMsg)
+        errors.push(errorMsg)
+        result.failed++
       } else {
-        const errorMsg = r.status === 'rejected' ? r.reason?.message || r.reason : 'send returned false'
+        const errorMsg = r.status === 'rejected' ? r.reason?.message || String(r.reason) : 'unknown error'
         console.log('[Push] Failed for subscription', i, errorMsg)
         errors.push(errorMsg)
         result.failed++
