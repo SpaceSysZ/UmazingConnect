@@ -31,6 +31,12 @@ export async function POST(request: NextRequest) {
       [userId]
     )
 
+    console.log('🔍 Test Push Debug:')
+    console.log('  User ID:', userId)
+    console.log('  Subscriptions in DB:', subscriptionCount)
+    console.log('  VAPID Configured:', vapidStatus.configured)
+    console.log('  Endpoints:', subsDetails.rows.map((r: any) => r.endpoint))
+
     // Create an in-app notification record so it shows in the notification bar
     const notificationResult = await pool.query(
       `INSERT INTO notifications (user_id, type, title, body)
@@ -40,6 +46,7 @@ export async function POST(request: NextRequest) {
     )
     const notificationId = notificationResult.rows[0]?.id
 
+    console.log('📬 Sending push notification...')
     const result = await sendPushToUser(userId, {
       title: 'Test Notification',
       body: 'Button clicked! Push notifications are working.',
@@ -47,6 +54,8 @@ export async function POST(request: NextRequest) {
       tag: 'test-notification',
       notificationId,
     })
+
+    console.log('📨 Push result:', JSON.stringify(result, null, 2))
 
     return NextResponse.json({
       success: true,
@@ -60,11 +69,13 @@ export async function POST(request: NextRequest) {
         vapidPublicKeySet: vapidStatus.hasPublicKey,
         vapidPrivateKeySet: vapidStatus.hasPrivateKey,
         errors: (result as any).errors || [],
+        sent: (result as any).sent || 0,
+        failed: (result as any).failed || 0,
         endpoints: subsDetails.rows.map((r: any) => r.endpoint.substring(0, 60) + '...'),
       },
     })
   } catch (error) {
-    console.error('Error sending test notification:', error)
+    console.error('❌ Error sending test notification:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to send test notification' },
       { status: 500 }

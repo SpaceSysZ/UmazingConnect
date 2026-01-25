@@ -78,35 +78,69 @@ interface PushSubscription {
 export async function sendPushNotification(
   subscription: PushSubscription,
   payload: PushPayload
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; details?: any }> {
   if (!ensureVapidInitialized()) {
     console.warn('[Push] VAPID keys not configured, skipping push notification')
     return { success: false, error: 'VAPID not configured' }
   }
 
   try {
-    console.log('[Push] Attempting to send notification to:', subscription.endpoint.substring(0, 80))
-    const result = await webpush.sendNotification(subscription, JSON.stringify(payload), {
-      TTL: 86400, // 24 hours - required by iOS/Safari
-      urgency: 'high', // Attempt immediate delivery (important for iOS)
-    })
-    console.log('[Push] Send successful, status:', result.statusCode)
-    return { success: true }
+    console.log('[Push] 📤 Sending notification to:', subscription.endpoint.substring(0, 80))
+    console.log('[Push] 📦 Payload:', JSON.stringify(payload))
+    
+    const result = await webpush.sendNotification(
+      subscription, 
+      JSON.stringify(payload), 
+      {
+        TTL: 2419200, // 4 weeks (maximum for FCM)
+        urgency: 'high',
+      }
+    )
+    
+    console.log('[Push] ✅ FCM Response:')
+    console.log('  Status Code:', result.statusCode)
+    console.log('  Headers:', JSON.stringify(result.headers, null, 2))
+    console.log('  Body:', result.body)
+    
+    // Check if FCM returned any specific information
+    if (result.statusCode === 201) {
+      console.log('[Push] 🎉 FCM accepted the push!')
+    }
+    
+    return { 
+      success: true,
+      details: {
+        statusCode: result.statusCode,
+        headers: result.headers,
+        body: result.body
+      }
+    }
   } catch (error: any) {
     const errorDetails = `${error.statusCode || 'no status'}: ${error.message || error.body || 'unknown error'}`
-    console.error('[Push] Send failed:', {
+    console.error('[Push] ❌ Send failed:', {
       statusCode: error.statusCode,
       message: error.message,
       body: error.body,
+      headers: error.headers,
       endpoint: subscription.endpoint.substring(0, 80),
     })
+    
     // Handle specific error codes
     if (error.statusCode === 410 || error.statusCode === 404) {
       // Subscription is no longer valid - remove it from database
-      console.log('[Push] Removing invalid subscription:', subscription.endpoint)
+      console.log('[Push] 🗑️ Removing invalid subscription:', subscription.endpoint)
       await removeSubscription(subscription.endpoint)
     }
-    return { success: false, error: errorDetails }
+    
+    return { 
+      success: false, 
+      error: errorDetails,
+      details: {
+        statusCode: error.statusCode,
+        headers: error.headers,
+        body: error.body
+      }
+    }
   }
 }
 
@@ -117,10 +151,10 @@ export async function sendPushNotification(
 export async function sendPushToUser(
   userId: string,
   payload: PushPayload
-): Promise<{ sent: number; failed: number }> {
+): Promise<{ sent: number; failed: number; errors?: string[]; details?: any[] }> {
   const result = { sent: 0, failed: 0 }
 
-  console.log('[Push] sendPushToUser called for user:', userId)
+  console.log('[Push] 🚀 sendPushToUser called for user:', userId)
 
   if (!ensureVapidInitialized()) {
     console.warn('[Push] VAPID keys not configured, skipping push notifications')
@@ -134,7 +168,7 @@ export async function sendPushToUser(
       [userId]
     )
 
-    console.log('[Push] Found subscriptions:', subscriptionsResult.rows.length)
+    console.log('[Push] 📋 Found subscriptions:', subscriptionsResult.rows.length)
 
     const subscriptions: PushSubscription[] = subscriptionsResult.rows.map((row) => ({
       endpoint: row.endpoint,
@@ -146,36 +180,51 @@ export async function sendPushToUser(
 
     // Send to all subscriptions in parallel
     const results = await Promise.allSettled(
-      subscriptions.map((sub) => {
-        console.log('[Push] Sending to endpoint:', sub.endpoint.substring(0, 50) + '...')
+      subscriptions.map((sub, i) => {
+        console.log(`[Push] 📨 Sending to subscription ${i + 1}:`, sub.endpoint.substring(0, 60) + '...')
         return sendPushNotification(sub, payload)
       })
     )
 
     const errors: string[] = []
+    const details: any[] = []
+    
     results.forEach((r, i) => {
       if (r.status === 'fulfilled' && r.value?.success) {
-        console.log('[Push] Success for subscription', i)
+        console.log(`[Push] ✅ Success for subscription ${i + 1}`)
         result.sent++
+        if (r.value.details) {
+          details.push({ index: i, success: true, ...r.value.details })
+        }
       } else if (r.status === 'fulfilled' && !r.value?.success) {
         const errorMsg = r.value?.error || 'unknown error'
-        console.log('[Push] Failed for subscription', i, errorMsg)
+        console.log(`[Push] ❌ Failed for subscription ${i + 1}:`, errorMsg)
         errors.push(errorMsg)
         result.failed++
+        if (r.value?.details) {
+          details.push({ index: i, success: false, error: errorMsg, ...r.value.details })
+        }
       } else {
         const errorMsg = r.status === 'rejected' ? r.reason?.message || String(r.reason) : 'unknown error'
-        console.log('[Push] Failed for subscription', i, errorMsg)
+        console.log(`[Push] ❌ Failed for subscription ${i + 1}:`, errorMsg)
         errors.push(errorMsg)
         result.failed++
+        details.push({ index: i, success: false, error: errorMsg })
       }
     })
-    // Attach errors to result for debugging
-    ;(result as any).errors = errors
+    
+    // Attach errors and details to result for debugging
+    if (errors.length > 0) {
+      (result as any).errors = errors
+    }
+    if (details.length > 0) {
+      (result as any).details = details
+    }
   } catch (error) {
     console.error('[Push] Error sending push notifications to user:', error)
   }
 
-  console.log('[Push] Final result:', result)
+  console.log('[Push] 📊 Final result:', result)
   return result
 }
 
