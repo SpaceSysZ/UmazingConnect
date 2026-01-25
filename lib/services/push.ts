@@ -151,15 +151,20 @@ export async function sendPushToUser(
       })
     )
 
+    const errors: string[] = []
     results.forEach((r, i) => {
       if (r.status === 'fulfilled' && r.value) {
         console.log('[Push] Success for subscription', i)
         result.sent++
       } else {
-        console.log('[Push] Failed for subscription', i, r.status === 'rejected' ? r.reason : 'value was false')
+        const errorMsg = r.status === 'rejected' ? r.reason?.message || r.reason : 'send returned false'
+        console.log('[Push] Failed for subscription', i, errorMsg)
+        errors.push(errorMsg)
         result.failed++
       }
     })
+    // Attach errors to result for debugging
+    ;(result as any).errors = errors
   } catch (error) {
     console.error('[Push] Error sending push notifications to user:', error)
   }

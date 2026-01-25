@@ -49,6 +49,8 @@ export async function POST(request: NextRequest) {
         vapidConfigured: vapidStatus.configured,
         vapidPublicKeySet: vapidStatus.hasPublicKey,
         vapidPrivateKeySet: vapidStatus.hasPrivateKey,
+        errors: (result as any).errors || [],
+        endpoints: subsDetails.rows.map((r: any) => r.endpoint.substring(0, 60) + '...'),
       },
     })
   } catch (error) {

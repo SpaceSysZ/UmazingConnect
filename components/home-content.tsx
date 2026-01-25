@@ -49,14 +49,15 @@ export function HomeContent() {
       const data = await response.json()
       if (data.success) {
         const debug = data.debug || {}
+        const errors = debug.errors?.length > 0 ? `\nErrors: ${debug.errors.join(', ')}` : ''
+        const endpoints = debug.endpoints?.length > 0 ? `\nEndpoints: ${debug.endpoints.join('\n')}` : ''
         alert(
           `Test notification sent!\n` +
           `Sent: ${data.result.sent}, Failed: ${data.result.failed}\n` +
           `Subscriptions in DB: ${debug.subscriptionsInDb || 0}\n` +
-          `Subscriptions found: ${debug.subscriptionsFound || 0}\n` +
-          `VAPID configured: ${debug.vapidConfigured ? 'Yes' : 'NO!'}\n` +
-          `Public key set: ${debug.vapidPublicKeySet ? 'Yes' : 'NO!'}\n` +
-          `Private key set: ${debug.vapidPrivateKeySet ? 'Yes' : 'NO!'}`
+          `VAPID configured: ${debug.vapidConfigured ? 'Yes' : 'NO!'}` +
+          errors +
+          endpoints
         )
       } else {
         alert(`Failed: ${data.error}`)
