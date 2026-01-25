@@ -18,12 +18,24 @@ export interface RoleCheck {
  */
 export async function getUserRoles(userId: string): Promise<RoleCheck> {
   try {
-    // Check if user is a coordinator
+    // Check if user is a coordinator (database OR environment variable)
     const coordinatorCheck = await db.query(
       `SELECT id FROM user_roles WHERE user_id = $1 AND role = 'coordinator' LIMIT 1`,
       [userId]
     )
-    const isCoordinator = coordinatorCheck.rows.length > 0
+    let isCoordinator = coordinatorCheck.rows.length > 0
+
+    // Also check if user email is in coordinator emails environment variable
+    if (!isCoordinator) {
+      const userEmailQuery = await db.query(
+        `SELECT email FROM users WHERE id = $1 LIMIT 1`,
+        [userId]
+      )
+      if (userEmailQuery.rows.length > 0) {
+        const userEmail = userEmailQuery.rows[0].email
+        isCoordinator = isCoordinatorEmail(userEmail)
+      }
+    }
 
     // Get clubs where user is a sponsor
     const sponsorCheck = await db.query(
@@ -74,11 +86,24 @@ export async function getUserRoles(userId: string): Promise<RoleCheck> {
  */
 export async function isCoordinator(userId: string): Promise<boolean> {
   try {
+    // Check database first
     const result = await db.query(
       `SELECT id FROM user_roles WHERE user_id = $1 AND role = 'coordinator' LIMIT 1`,
       [userId]
     )
-    return result.rows.length > 0
+    if (result.rows.length > 0) return true
+
+    // Check environment variable
+    const userEmailQuery = await db.query(
+      `SELECT email FROM users WHERE id = $1 LIMIT 1`,
+      [userId]
+    )
+    if (userEmailQuery.rows.length > 0) {
+      const userEmail = userEmailQuery.rows[0].email
+      return isCoordinatorEmail(userEmail)
+    }
+
+    return false
   } catch (error) {
     console.error("Error checking coordinator status:", error)
     return false

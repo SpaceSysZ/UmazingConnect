@@ -2,16 +2,55 @@
 import webpush from 'web-push'
 import pool from '@/lib/db'
 
-// Initialize web-push with VAPID details
-const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY
+// Track if VAPID has been initialized
+let vapidInitialized = false
 
-if (vapidPublicKey && vapidPrivateKey) {
-  webpush.setVapidDetails(
-    'mailto:notifications@schoolconnect.app',
-    vapidPublicKey,
-    vapidPrivateKey
-  )
+/**
+ * Initialize VAPID details - called at runtime to ensure env vars are available
+ */
+function ensureVapidInitialized() {
+  if (vapidInitialized) return true
+
+  const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+  const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY
+
+  console.log('[Push] Initializing VAPID:', {
+    hasPublic: !!vapidPublicKey,
+    hasPrivate: !!vapidPrivateKey,
+    publicLength: vapidPublicKey?.length,
+    privateLength: vapidPrivateKey?.length,
+  })
+
+  if (vapidPublicKey && vapidPrivateKey) {
+    webpush.setVapidDetails(
+      'mailto:notifications@schoolconnect.app',
+      vapidPublicKey,
+      vapidPrivateKey
+    )
+    vapidInitialized = true
+    console.log('[Push] VAPID initialized successfully')
+    return true
+  }
+
+  console.warn('[Push] VAPID keys not available')
+  return false
+}
+
+/**
+ * Get VAPID configuration status for debugging
+ */
+export function getVapidStatus() {
+  const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+  const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY
+
+  return {
+    configured: !!(vapidPublicKey && vapidPrivateKey),
+    hasPublicKey: !!vapidPublicKey,
+    hasPrivateKey: !!vapidPrivateKey,
+    publicKeyLength: vapidPublicKey?.length || 0,
+    privateKeyLength: vapidPrivateKey?.length || 0,
+    vapidInitialized,
+  }
 }
 
 export interface PushPayload {
@@ -40,25 +79,31 @@ export async function sendPushNotification(
   subscription: PushSubscription,
   payload: PushPayload
 ): Promise<boolean> {
-  if (!vapidPublicKey || !vapidPrivateKey) {
-    console.warn('VAPID keys not configured, skipping push notification')
+  if (!ensureVapidInitialized()) {
+    console.warn('[Push] VAPID keys not configured, skipping push notification')
     return false
   }
 
   try {
-    await webpush.sendNotification(subscription, JSON.stringify(payload), {
+    console.log('[Push] Attempting to send notification to:', subscription.endpoint.substring(0, 80))
+    const result = await webpush.sendNotification(subscription, JSON.stringify(payload), {
       TTL: 86400, // 24 hours - required by iOS/Safari
       urgency: 'high', // Attempt immediate delivery (important for iOS)
     })
+    console.log('[Push] Send successful, status:', result.statusCode)
     return true
   } catch (error: any) {
+    console.error('[Push] Send failed:', {
+      statusCode: error.statusCode,
+      message: error.message,
+      body: error.body,
+      endpoint: subscription.endpoint.substring(0, 80),
+    })
     // Handle specific error codes
     if (error.statusCode === 410 || error.statusCode === 404) {
       // Subscription is no longer valid - remove it from database
-      console.log('Removing invalid subscription:', subscription.endpoint)
+      console.log('[Push] Removing invalid subscription:', subscription.endpoint)
       await removeSubscription(subscription.endpoint)
-    } else {
-      console.error('Error sending push notification:', error.message)
     }
     return false
   }
@@ -74,8 +119,10 @@ export async function sendPushToUser(
 ): Promise<{ sent: number; failed: number }> {
   const result = { sent: 0, failed: 0 }
 
-  if (!vapidPublicKey || !vapidPrivateKey) {
-    console.warn('VAPID keys not configured, skipping push notifications')
+  console.log('[Push] sendPushToUser called for user:', userId)
+
+  if (!ensureVapidInitialized()) {
+    console.warn('[Push] VAPID keys not configured, skipping push notifications')
     return result
   }
 
@@ -85,6 +132,8 @@ export async function sendPushToUser(
       'SELECT endpoint, p256dh_key, auth_key FROM push_subscriptions WHERE user_id = $1',
       [userId]
     )
+
+    console.log('[Push] Found subscriptions:', subscriptionsResult.rows.length)
 
     const subscriptions: PushSubscription[] = subscriptionsResult.rows.map((row) => ({
       endpoint: row.endpoint,
@@ -96,20 +145,26 @@ export async function sendPushToUser(
 
     // Send to all subscriptions in parallel
     const results = await Promise.allSettled(
-      subscriptions.map((sub) => sendPushNotification(sub, payload))
+      subscriptions.map((sub) => {
+        console.log('[Push] Sending to endpoint:', sub.endpoint.substring(0, 50) + '...')
+        return sendPushNotification(sub, payload)
+      })
     )
 
-    results.forEach((r) => {
+    results.forEach((r, i) => {
       if (r.status === 'fulfilled' && r.value) {
+        console.log('[Push] Success for subscription', i)
         result.sent++
       } else {
+        console.log('[Push] Failed for subscription', i, r.status === 'rejected' ? r.reason : 'value was false')
         result.failed++
       }
     })
   } catch (error) {
-    console.error('Error sending push notifications to user:', error)
+    console.error('[Push] Error sending push notifications to user:', error)
   }
 
+  console.log('[Push] Final result:', result)
   return result
 }
 

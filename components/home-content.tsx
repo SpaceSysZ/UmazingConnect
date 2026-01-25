@@ -48,7 +48,16 @@ export function HomeContent() {
       })
       const data = await response.json()
       if (data.success) {
-        alert(`Test notification sent!\nSent: ${data.result.sent}, Failed: ${data.result.failed}\nSubscriptions in DB: ${data.debug?.subscriptionsInDb || 0}`)
+        const debug = data.debug || {}
+        alert(
+          `Test notification sent!\n` +
+          `Sent: ${data.result.sent}, Failed: ${data.result.failed}\n` +
+          `Subscriptions in DB: ${debug.subscriptionsInDb || 0}\n` +
+          `Subscriptions found: ${debug.subscriptionsFound || 0}\n` +
+          `VAPID configured: ${debug.vapidConfigured ? 'Yes' : 'NO!'}\n` +
+          `Public key set: ${debug.vapidPublicKeySet ? 'Yes' : 'NO!'}\n` +
+          `Private key set: ${debug.vapidPrivateKeySet ? 'Yes' : 'NO!'}`
+        )
       } else {
         alert(`Failed: ${data.error}`)
       }
