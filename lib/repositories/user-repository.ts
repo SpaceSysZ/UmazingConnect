@@ -18,14 +18,15 @@ export class UserRepository {
     } = userData
 
     try {
+      // Note: We intentionally do NOT update role on conflict - role should only be set
+      // on initial user creation or via explicit admin action, not overwritten on login
       const result = await query(
         `INSERT INTO users (email, name, avatar_url, role, grade, department, bio, updated_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
-         ON CONFLICT (email) 
-         DO UPDATE SET 
+         ON CONFLICT (email)
+         DO UPDATE SET
            name = EXCLUDED.name,
            avatar_url = EXCLUDED.avatar_url,
-           role = EXCLUDED.role,
            grade = EXCLUDED.grade,
            department = EXCLUDED.department,
            bio = EXCLUDED.bio,

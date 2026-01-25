@@ -12,7 +12,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { User, Mail, GraduationCap, Users, Crown, Shield } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { User, Mail, GraduationCap, Users, Crown, Shield, Settings } from "lucide-react"
 import { UserProfile } from "@/lib/auth-config"
 import Link from "next/link"
 
@@ -32,6 +33,8 @@ interface UserClub {
 export function UserSettingsDialog({ open, onOpenChange, user }: UserSettingsDialogProps) {
   const [clubs, setClubs] = useState<UserClub[]>([])
   const [isTeacher, setIsTeacher] = useState(false)
+  const [isCoordinator, setIsCoordinator] = useState(false)
+  const [isSponsor, setIsSponsor] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -43,6 +46,16 @@ export function UserSettingsDialog({ open, onOpenChange, user }: UserSettingsDia
   const loadUserData = async () => {
     try {
       setLoading(true)
+
+      // Check user roles (coordinator, sponsor, etc.)
+      const statsResponse = await fetch(`/api/users/stats?userId=${user.id}`)
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json()
+        if (statsData.data) {
+          setIsCoordinator(statsData.data.isCoordinator)
+          setIsSponsor(statsData.data.isSponsor)
+        }
+      }
 
       // Check if teacher
       const teacherResponse = await fetch(`/api/users/check-teacher?email=${encodeURIComponent(user.email)}`)
@@ -120,7 +133,13 @@ export function UserSettingsDialog({ open, onOpenChange, user }: UserSettingsDia
                 <Mail className="h-3.5 w-3.5" />
                 {user.email}
               </div>
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                {isCoordinator && (
+                  <Badge className="bg-purple-100 text-purple-800">
+                    <Shield className="h-3 w-3 mr-1" />
+                    Coordinator
+                  </Badge>
+                )}
                 {isTeacher ? (
                   <Badge className="bg-blue-100 text-blue-800">
                     <GraduationCap className="h-3 w-3 mr-1" />
@@ -142,6 +161,29 @@ export function UserSettingsDialog({ open, onOpenChange, user }: UserSettingsDia
           </div>
 
           <Separator />
+
+          {/* Quick Actions - Admin/Sponsor Links */}
+          {(isCoordinator || isSponsor) && (
+            <div className="space-y-2">
+              {isCoordinator && (
+                <Link href="/admin" onClick={() => onOpenChange(false)}>
+                  <Button variant="outline" className="w-full justify-start">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Admin Dashboard
+                  </Button>
+                </Link>
+              )}
+              {isSponsor && (
+                <Link href="/sponsor" onClick={() => onOpenChange(false)}>
+                  <Button variant="outline" className="w-full justify-start">
+                    <Shield className="h-4 w-4 mr-2" />
+                    Sponsor Dashboard
+                  </Button>
+                </Link>
+              )}
+              <Separator />
+            </div>
+          )}
 
           {/* Clubs Section */}
           <div className="space-y-3">
