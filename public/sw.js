@@ -25,6 +25,8 @@ self.addEventListener('activate', (event) => {
 // IMPORTANT: iOS/Safari requires showing a notification immediately.
 // If we don't show one, Safari revokes push permission for the site.
 self.addEventListener('push', (event) => {
+  console.log('[SW] Push event received!', event)
+
   // Default notification data - always have a fallback
   let data = {
     title: 'SchoolConnect',
@@ -36,16 +38,23 @@ self.addEventListener('push', (event) => {
   if (event.data) {
     try {
       const pushData = event.data.json()
+      console.log('[SW] Push data parsed:', pushData)
       data = { ...data, ...pushData }
     } catch (error) {
+      console.log('[SW] JSON parse failed, trying text')
       // If JSON parsing fails, try to get text
       try {
         data.body = event.data.text() || data.body
       } catch (e) {
+        console.log('[SW] Text parse also failed')
         // Use default data
       }
     }
+  } else {
+    console.log('[SW] No push data received')
   }
+
+  console.log('[SW] Showing notification with data:', data)
 
   const options = {
     body: data.body,

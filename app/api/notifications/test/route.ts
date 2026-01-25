@@ -31,11 +31,21 @@ export async function POST(request: NextRequest) {
       [userId]
     )
 
+    // Create an in-app notification record so it shows in the notification bar
+    const notificationResult = await pool.query(
+      `INSERT INTO notifications (user_id, type, title, body)
+       VALUES ($1, 'club_update', $2, $3)
+       RETURNING id`,
+      [userId, 'Test Notification', 'Button clicked! Push notifications are working.']
+    )
+    const notificationId = notificationResult.rows[0]?.id
+
     const result = await sendPushToUser(userId, {
       title: 'Test Notification',
       body: 'Button clicked! Push notifications are working.',
-      url: '/',
+      url: '/notifications',
       tag: 'test-notification',
+      notificationId,
     })
 
     return NextResponse.json({
