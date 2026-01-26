@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Heart, Users, Loader2, Newspaper, Bell } from "lucide-react"
+import { Heart, Users, Loader2, Newspaper } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/auth-context"
 import Link from "next/link"
@@ -31,44 +31,6 @@ export function HomeContent() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
-  const [testingNotification, setTestingNotification] = useState(false)
-
-  // TEMPORARY: Test push notification
-  const sendTestNotification = async () => {
-    if (!user?.id) {
-      alert("Please log in first")
-      return
-    }
-    setTestingNotification(true)
-    try {
-      const response = await fetch('/api/notifications/test', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id }),
-      })
-      const data = await response.json()
-      if (data.success) {
-        const debug = data.debug || {}
-        const errors = debug.errors?.length > 0 ? `\nErrors: ${debug.errors.join(', ')}` : ''
-        const endpoints = debug.endpoints?.length > 0 ? `\nEndpoints: ${debug.endpoints.join('\n')}` : ''
-        alert(
-          `Test notification sent!\n` +
-          `Sent: ${data.result.sent}, Failed: ${data.result.failed}\n` +
-          `Subscriptions in DB: ${debug.subscriptionsInDb || 0}\n` +
-          `VAPID configured: ${debug.vapidConfigured ? 'Yes' : 'NO!'}` +
-          errors +
-          endpoints
-        )
-      } else {
-        alert(`Failed: ${data.error}`)
-      }
-    } catch (error) {
-      alert('Error sending test notification')
-      console.error(error)
-    } finally {
-      setTestingNotification(false)
-    }
-  }
 
   // Load posts with pagination
   const loadPosts = async (pageNum: number = 1, append: boolean = false) => {
@@ -203,17 +165,6 @@ export function HomeContent() {
           Posts from all school clubs
         </p>
         <div className="w-24 h-1 bg-primary mx-auto" />
-
-        {/* TEMPORARY: Test Push Notification Button */}
-        <Button
-          onClick={sendTestNotification}
-          disabled={testingNotification}
-          variant="outline"
-          className="mt-4 bg-yellow-100 border-yellow-500 text-yellow-800 hover:bg-yellow-200"
-        >
-          <Bell className="h-4 w-4 mr-2" />
-          {testingNotification ? 'Sending...' : 'Test Push Notification'}
-        </Button>
       </div>
 
       {/* Posts Feed */}

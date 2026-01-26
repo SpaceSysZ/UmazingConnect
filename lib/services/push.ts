@@ -125,9 +125,11 @@ export async function sendPushNotification(
       endpoint: subscription.endpoint.substring(0, 80),
     })
     
-    // Handle specific error codes
-    if (error.statusCode === 410 || error.statusCode === 404) {
-      // Subscription is no longer valid - remove it from database
+    // Handle specific error codes - remove invalid subscriptions
+    // 400 = malformed/invalid subscription
+    // 404 = subscription not found
+    // 410 = subscription expired/gone
+    if (error.statusCode === 400 || error.statusCode === 404 || error.statusCode === 410) {
       console.log('[Push] 🗑️ Removing invalid subscription:', subscription.endpoint)
       await removeSubscription(subscription.endpoint)
     }
