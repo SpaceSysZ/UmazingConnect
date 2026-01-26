@@ -185,6 +185,16 @@ export function UserSettingsDialog({ open, onOpenChange, user }: UserSettingsDia
             </div>
           )}
 
+          {/* Full Settings Page Link */}
+          <Link href="/settings" onClick={() => onOpenChange(false)}>
+            <Button variant="outline" className="w-full justify-start">
+              <Settings className="h-4 w-4 mr-2" />
+              Full Settings & Appearance
+            </Button>
+          </Link>
+
+          <Separator />
+
           {/* Clubs Section */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
