@@ -134,13 +134,12 @@ export function UserSettingsDialog({ open, onOpenChange, user }: UserSettingsDia
                 {user.email}
               </div>
               <div className="flex flex-wrap items-center gap-2 mt-2">
-                {isCoordinator && (
+                {isCoordinator ? (
                   <Badge className="bg-purple-100 text-purple-800">
                     <Shield className="h-3 w-3 mr-1" />
-                    Coordinator
+                    Admin
                   </Badge>
-                )}
-                {isTeacher ? (
+                ) : isTeacher ? (
                   <Badge className="bg-blue-100 text-blue-800">
                     <GraduationCap className="h-3 w-3 mr-1" />
                     Teacher
@@ -148,7 +147,7 @@ export function UserSettingsDialog({ open, onOpenChange, user }: UserSettingsDia
                 ) : (
                   <Badge variant="outline">
                     <User className="h-3 w-3 mr-1" />
-                    {user.role}
+                    Student
                   </Badge>
                 )}
                 {user.grade && (
