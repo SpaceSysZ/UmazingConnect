@@ -3,10 +3,13 @@
 import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
+import { useTheme } from "next-themes"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 import {
   User,
   Shield,
@@ -20,7 +23,10 @@ import {
   Award,
   Building,
   ArrowLeft,
-  Bell
+  Bell,
+  Moon,
+  Sun,
+  Palette
 } from "lucide-react"
 import Link from "next/link"
 
@@ -40,8 +46,15 @@ interface UserStats {
 export default function SettingsPage() {
   const { user } = useAuth()
   const router = useRouter()
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
   const [stats, setStats] = useState<UserStats | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (!user) {
@@ -197,6 +210,43 @@ export default function SettingsPage() {
               <p className="text-sm">{user.bio}</p>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Appearance Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Palette className="h-5 w-5" />
+            Appearance
+          </CardTitle>
+          <CardDescription>Customize the look and feel of the app</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {mounted && theme === 'dark' ? (
+                <Moon className="h-5 w-5 text-muted-foreground" />
+              ) : (
+                <Sun className="h-5 w-5 text-muted-foreground" />
+              )}
+              <div>
+                <Label htmlFor="dark-mode" className="text-base font-medium">
+                  Dark Mode
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {mounted && theme === 'dark'
+                    ? 'Sleek dark theme enabled'
+                    : 'Switch to a refined dark theme'}
+                </p>
+              </div>
+            </div>
+            <Switch
+              id="dark-mode"
+              checked={mounted && theme === 'dark'}
+              onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+            />
+          </div>
         </CardContent>
       </Card>
 
