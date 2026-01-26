@@ -214,7 +214,7 @@ export default function SettingsPage() {
       </Card>
 
       {/* Appearance Settings */}
-      <Card>
+      <Card className="border-4 border-green-500">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Palette className="h-5 w-5" />
