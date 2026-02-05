@@ -45,6 +45,11 @@ import {
   Search,
   RefreshCw,
   AlertCircle,
+  ArrowLeft,
+  HelpCircle,
+  Mail,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -332,7 +337,12 @@ export function AdminDashboard({ userId }: { userId: string }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Settings className="h-8 w-8 text-purple-600" />
+          <Link href="/">
+            <Button variant="ghost" size="icon" className="shrink-0">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <Settings className="h-8 w-8 text-purple-600 hidden sm:block" />
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold">Admin Dashboard</h1>
             <p className="text-sm sm:text-base text-muted-foreground">
@@ -399,7 +409,7 @@ export function AdminDashboard({ userId }: { userId: string }) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="clubs" className="flex items-center gap-2">
             <Building className="h-4 w-4" />
             <span className="hidden sm:inline">Clubs</span>
@@ -410,7 +420,11 @@ export function AdminDashboard({ userId }: { userId: string }) {
           </TabsTrigger>
           <TabsTrigger value="memberships" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
-            <span className="hidden sm:inline">Memberships</span>
+            <span className="hidden sm:inline">Members</span>
+          </TabsTrigger>
+          <TabsTrigger value="faq" className="flex items-center gap-2">
+            <HelpCircle className="h-4 w-4" />
+            <span className="hidden sm:inline">FAQ</span>
           </TabsTrigger>
         </TabsList>
 

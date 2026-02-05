@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Home, Users, Bell, GraduationCap, Settings, LogOut, Menu } from "lucide-react"
+import { Home, Users, Bell, GraduationCap, Settings, LogOut, Menu, HelpCircle } from "lucide-react"
 import { UserProfile } from "@/lib/auth-config"
 import { UserSettingsDialog } from "./user-settings-dialog"
 import Link from "next/link"
@@ -167,6 +167,12 @@ export function Navigation({ activeSection, onSectionChange, user, onLogout }: N
                       <Settings className="mr-2 h-4 w-4" />
                       <span>Settings</span>
                     </DropdownMenuItem>
+                    <Link href="/faq">
+                      <DropdownMenuItem className="font-bold uppercase text-xs tracking-wide cursor-pointer">
+                        <HelpCircle className="mr-2 h-4 w-4" />
+                        <span>FAQ & Support</span>
+                      </DropdownMenuItem>
+                    </Link>
                     <DropdownMenuSeparator className="bg-foreground/20" />
                     <DropdownMenuItem onClick={onLogout} className="font-bold uppercase text-xs tracking-wide cursor-pointer text-destructive focus:text-destructive">
                       <LogOut className="mr-2 h-4 w-4" />
@@ -256,6 +262,13 @@ export function Navigation({ activeSection, onSectionChange, user, onLogout }: N
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
                   </DropdownMenuItem>
+
+                  <Link href="/faq">
+                    <DropdownMenuItem className="font-bold uppercase text-xs tracking-wide cursor-pointer">
+                      <HelpCircle className="mr-2 h-4 w-4" />
+                      <span>FAQ & Support</span>
+                    </DropdownMenuItem>
+                  </Link>
 
                   <DropdownMenuSeparator className="bg-foreground/20" />
 

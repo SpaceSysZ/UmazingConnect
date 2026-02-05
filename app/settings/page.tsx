@@ -26,7 +26,8 @@ import {
   Bell,
   Moon,
   Sun,
-  Palette
+  Palette,
+  HelpCircle,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -357,6 +358,13 @@ export default function SettingsPage() {
             <Button variant="outline" className="w-full justify-start">
               <Users className="h-4 w-4 mr-2" />
               Browse Clubs
+            </Button>
+          </Link>
+
+          <Link href="/faq">
+            <Button variant="outline" className="w-full justify-start">
+              <HelpCircle className="h-4 w-4 mr-2" />
+              FAQ & Support
             </Button>
           </Link>
         </CardContent>
