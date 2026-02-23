@@ -18,55 +18,45 @@ export interface RoleCheck {
  */
 export async function getUserRoles(userId: string): Promise<RoleCheck> {
   try {
-    // Check if user is a coordinator (database OR environment variable)
-    const coordinatorCheck = await db.query(
-      `SELECT id FROM user_roles WHERE user_id = $1 AND role = 'coordinator' LIMIT 1`,
-      [userId]
-    )
-    let isCoordinator = coordinatorCheck.rows.length > 0
+    // All five queries run in parallel — reduces latency from sum to max.
+    // We always fetch the user email so we can check coordinator-by-email without
+    // a second sequential round trip if the role-table check fails.
+    const [coordinatorResult, userResult, sponsorResult, presidentResult, officerResult] =
+      await Promise.all([
+        db.query(
+          `SELECT id FROM user_roles WHERE user_id = $1 AND role = 'coordinator' LIMIT 1`,
+          [userId]
+        ),
+        db.query(`SELECT email FROM users WHERE id = $1 LIMIT 1`, [userId]),
+        db.query(
+          `SELECT club_id FROM club_sponsors WHERE user_id = $1 AND status = 'active'`,
+          [userId]
+        ),
+        db.query(
+          `SELECT club_id FROM club_members WHERE user_id = $1 AND role = 'president'`,
+          [userId]
+        ),
+        db.query(
+          `SELECT id FROM club_members WHERE user_id = $1 AND role IN ('officer', 'leader') LIMIT 1`,
+          [userId]
+        ),
+      ])
 
-    // Also check if user email is in coordinator emails environment variable
-    if (!isCoordinator) {
-      const userEmailQuery = await db.query(
-        `SELECT email FROM users WHERE id = $1 LIMIT 1`,
-        [userId]
-      )
-      if (userEmailQuery.rows.length > 0) {
-        const userEmail = userEmailQuery.rows[0].email
-        isCoordinator = isCoordinatorEmail(userEmail)
-      }
-    }
+    const isCoordinatorByRole = coordinatorResult.rows.length > 0
+    const userEmail = userResult.rows[0]?.email
+    const isCoordinatorByEmail = userEmail ? isCoordinatorEmail(userEmail) : false
+    const isCoordinator = isCoordinatorByRole || isCoordinatorByEmail
 
-    // Get clubs where user is a sponsor
-    const sponsorCheck = await db.query(
-      `SELECT club_id FROM club_sponsors WHERE user_id = $1 AND status = 'active'`,
-      [userId]
-    )
-    const sponsoredClubIds = sponsorCheck.rows.map((row) => row.club_id)
-    const isSponsor = sponsoredClubIds.length > 0
-
-    // Get clubs where user is a president
-    const presidentCheck = await db.query(
-      `SELECT club_id FROM club_members WHERE user_id = $1 AND role = 'president'`,
-      [userId]
-    )
-    const presidentClubIds = presidentCheck.rows.map((row) => row.club_id)
-    const isPresident = presidentClubIds.length > 0
-
-    // Check if user is an officer in any club
-    const officerCheck = await db.query(
-      `SELECT id FROM club_members WHERE user_id = $1 AND role IN ('officer', 'leader') LIMIT 1`,
-      [userId]
-    )
-    const isOfficer = officerCheck.rows.length > 0
+    const sponsoredClubIds = sponsorResult.rows.map((row) => row.club_id)
+    const presidentClubIds = presidentResult.rows.map((row) => row.club_id)
 
     return {
       isCoordinator,
-      isSponsor,
+      isSponsor: sponsoredClubIds.length > 0,
       sponsoredClubIds,
-      isPresident,
+      isPresident: presidentClubIds.length > 0,
       presidentClubIds,
-      isOfficer,
+      isOfficer: officerResult.rows.length > 0,
     }
   } catch (error) {
     console.error("Error getting user roles:", error)
@@ -86,24 +76,18 @@ export async function getUserRoles(userId: string): Promise<RoleCheck> {
  */
 export async function isCoordinator(userId: string): Promise<boolean> {
   try {
-    // Check database first
-    const result = await db.query(
-      `SELECT id FROM user_roles WHERE user_id = $1 AND role = 'coordinator' LIMIT 1`,
-      [userId]
-    )
-    if (result.rows.length > 0) return true
+    // Fetch both checks in parallel to avoid a sequential round trip.
+    const [roleResult, userResult] = await Promise.all([
+      db.query(
+        `SELECT id FROM user_roles WHERE user_id = $1 AND role = 'coordinator' LIMIT 1`,
+        [userId]
+      ),
+      db.query(`SELECT email FROM users WHERE id = $1 LIMIT 1`, [userId]),
+    ])
 
-    // Check environment variable
-    const userEmailQuery = await db.query(
-      `SELECT email FROM users WHERE id = $1 LIMIT 1`,
-      [userId]
-    )
-    if (userEmailQuery.rows.length > 0) {
-      const userEmail = userEmailQuery.rows[0].email
-      return isCoordinatorEmail(userEmail)
-    }
-
-    return false
+    if (roleResult.rows.length > 0) return true
+    const userEmail = userResult.rows[0]?.email
+    return userEmail ? isCoordinatorEmail(userEmail) : false
   } catch (error) {
     console.error("Error checking coordinator status:", error)
     return false

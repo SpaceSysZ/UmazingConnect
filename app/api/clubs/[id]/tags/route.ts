@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import pool from '@/lib/db'
+import pool, { db } from '@/lib/db'
 
 // PUT /api/clubs/[id]/tags - Update club tags (leadership only)
 export async function PUT(
@@ -44,35 +44,29 @@ export async function PUT(
       )
     }
 
-    // Begin transaction
-    await pool.query('BEGIN')
+    // Use db.transaction() which pins a dedicated client for the whole
+    // transaction — pool.query('BEGIN') is unsafe because each call can
+    // land on a different connection from the pool.
+    await db.transaction(async (client) => {
+      await client.query('DELETE FROM club_tags WHERE club_id = $1', [clubId])
 
-    try {
-      // Delete existing tags
-      await pool.query('DELETE FROM club_tags WHERE club_id = $1', [clubId])
-
-      // Insert new tags
       if (tags.length > 0) {
-        const insertPromises = tags.map((tag: string) =>
-          pool.query(
-            'INSERT INTO club_tags (club_id, tag) VALUES ($1, $2)',
-            [clubId, tag.toLowerCase().trim()]
-          )
+        // Batch insert all tags in a single round trip using unnest.
+        const normalized = tags.map((t: string) => t.toLowerCase().trim())
+        await client.query(
+          `INSERT INTO club_tags (club_id, tag)
+           SELECT $1, unnest($2::text[])
+           ON CONFLICT DO NOTHING`,
+          [clubId, normalized]
         )
-        await Promise.all(insertPromises)
       }
+    })
 
-      await pool.query('COMMIT')
-
-      return NextResponse.json({
-        success: true,
-        message: 'Tags updated successfully',
-        data: { tags },
-      })
-    } catch (error) {
-      await pool.query('ROLLBACK')
-      throw error
-    }
+    return NextResponse.json({
+      success: true,
+      message: 'Tags updated successfully',
+      data: { tags },
+    })
   } catch (error) {
     console.error('Error updating tags:', error)
     return NextResponse.json(
