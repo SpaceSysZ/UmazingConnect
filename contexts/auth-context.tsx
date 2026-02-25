@@ -14,6 +14,7 @@ interface AuthContextType {
   isAuthenticated: boolean
   isLoading: boolean
   hasProfile: boolean
+  isTeacher: boolean
   login: () => Promise<void>
   logout: () => void
   createProfile: (profileData: Partial<UserProfile>) => Promise<void>
@@ -55,6 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [hasProfile, setHasProfile] = useState(false)
+  const [isTeacher, setIsTeacher] = useState(false)
   const [isInteractionInProgress, setIsInteractionInProgress] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
 
@@ -67,6 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Demo mode - skip Azure authentication
     if (DEMO_MODE) {
       setUser(DEMO_USER)
+      setIsTeacher(false)
       setIsAuthenticated(true)
       setHasProfile(true)
       setIsLoading(false)
@@ -198,11 +201,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           // Atomic authentication and registration: immediately upsert user to database
           await upsertUserToDatabase(userInfo.email, userInfo.displayName || userInfo.name || "", userInfo.picture)
-          
-          // Retrieve the user from database to get complete profile
-          const databaseUser = await getUserFromDatabase(userInfo.email)
+
+          // Retrieve user profile and teacher status in parallel — zero extra latency.
+          const [databaseUser, teacherData] = await Promise.all([
+            getUserFromDatabase(userInfo.email),
+            fetch(`/api/users/check-teacher?email=${encodeURIComponent(userInfo.email)}`)
+              .then((r) => r.json())
+              .catch(() => ({ isTeacher: false })),
+          ])
           if (databaseUser) {
             setUser(databaseUser)
+            setIsTeacher(teacherData.isTeacher ?? false)
             setIsAuthenticated(true)
             // User always has a profile after authentication since we create it in the database
             setHasProfile(true)
@@ -226,11 +235,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             try {
               // Atomic authentication and registration with fallback data
               await upsertUserToDatabase(account.username, account.name || "", undefined)
-              
-              // Retrieve the user from database
-              const databaseUser = await getUserFromDatabase(account.username)
+
+              // Retrieve user profile and teacher status in parallel.
+              const [databaseUser, teacherData] = await Promise.all([
+                getUserFromDatabase(account.username),
+                fetch(`/api/users/check-teacher?email=${encodeURIComponent(account.username)}`)
+                  .then((r) => r.json())
+                  .catch(() => ({ isTeacher: false })),
+              ])
               if (databaseUser) {
                 setUser(databaseUser)
+                setIsTeacher(teacherData.isTeacher ?? false)
                 setIsAuthenticated(true)
                 // User always has a profile after authentication since we create it in the database
                 setHasProfile(true)
@@ -498,6 +513,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated,
     isLoading,
     hasProfile,
+    isTeacher,
     login,
     logout,
     createProfile,

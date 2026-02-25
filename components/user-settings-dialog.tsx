@@ -21,6 +21,7 @@ interface UserSettingsDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   user: UserProfile
+  isTeacher: boolean
 }
 
 interface UserClub {
@@ -30,9 +31,8 @@ interface UserClub {
   memberRole: string
 }
 
-export function UserSettingsDialog({ open, onOpenChange, user }: UserSettingsDialogProps) {
+export function UserSettingsDialog({ open, onOpenChange, user, isTeacher }: UserSettingsDialogProps) {
   const [clubs, setClubs] = useState<UserClub[]>([])
-  const [isTeacher, setIsTeacher] = useState(false)
   const [isCoordinator, setIsCoordinator] = useState(false)
   const [isSponsor, setIsSponsor] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -47,8 +47,13 @@ export function UserSettingsDialog({ open, onOpenChange, user }: UserSettingsDia
     try {
       setLoading(true)
 
-      // Check user roles (coordinator, sponsor, etc.)
-      const statsResponse = await fetch(`/api/users/stats?userId=${user.id}`)
+      // Stats and clubs are independent — run them in parallel.
+      // isTeacher comes from auth context via prop, no fetch needed here.
+      const [statsResponse, clubsResponse] = await Promise.all([
+        fetch(`/api/users/stats?userId=${user.id}`),
+        fetch(`/api/clubs?userId=${user.id}`),
+      ])
+
       if (statsResponse.ok) {
         const statsData = await statsResponse.json()
         if (statsData.data) {
@@ -57,19 +62,9 @@ export function UserSettingsDialog({ open, onOpenChange, user }: UserSettingsDia
         }
       }
 
-      // Check if teacher
-      const teacherResponse = await fetch(`/api/users/check-teacher?email=${encodeURIComponent(user.email)}`)
-      if (teacherResponse.ok) {
-        const teacherData = await teacherResponse.json()
-        setIsTeacher(teacherData.isTeacher)
-      }
-
-      // Get user's clubs
-      const clubsResponse = await fetch(`/api/clubs?userId=${user.id}`)
       if (clubsResponse.ok) {
         const clubsData = await clubsResponse.json()
-        const userClubs = clubsData.data.filter((club: any) => club.is_joined)
-        setClubs(userClubs)
+        setClubs(clubsData.data.filter((club: any) => club.is_joined))
       }
     } catch (error) {
       console.error("Error loading user data:", error)

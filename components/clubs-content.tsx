@@ -78,7 +78,7 @@ const categoryColors = {
 }
 
 export function ClubsContent() {
-  const { user } = useAuth()
+  const { user, isTeacher } = useAuth()
   const router = useRouter()
   const [clubs, setClubs] = useState<Club[]>([])
   const [searchTerm, setSearchTerm] = useState("")
@@ -110,6 +110,7 @@ export function ClubsContent() {
   useEffect(() => {
     loadClubs()
   }, [loadClubs])
+
 
   const handleJoinLeave = useCallback(async (clubId: string, isJoined: boolean) => {
     if (!user?.id) return
@@ -328,15 +329,19 @@ export function ClubsContent() {
           )}
 
           <div className="flex flex-col gap-2 pt-2 border-t-2 border-foreground/20">
-            {/* Sponsor Claim Button - Show on ALL clubs for teachers */}
-            {user?.id && (
+            {/* Sponsor Claim Button — only mount for verified teachers who
+                aren't already sponsoring this club. isTeacher is fetched once
+                at the parent level; isAlreadySponsor comes from the clubs API
+                response (memberRole field), so zero extra requests are needed. */}
+            {user?.id && isTeacher && club.memberRole !== 'sponsor' && (
               <ClaimSponsorDialog
                 clubId={club.id}
                 clubName={club.name}
                 userId={user.id}
                 userName={user.name || "User"}
                 userEmail={user.email}
-                userType={user.userType}
+                isVerifiedTeacher={isTeacher}
+                isAlreadySponsor={club.memberRole === 'sponsor'}
                 onClaimSuccess={handleClaimSuccess}
               />
             )}
