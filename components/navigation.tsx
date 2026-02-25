@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useAuth } from "@/contexts/auth-context"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -25,7 +26,7 @@ interface NavigationProps {
 }
 
 export function Navigation({ activeSection, onSectionChange, user, onLogout }: NavigationProps) {
-  const [isTeacher, setIsTeacher] = useState(false)
+  const { isTeacher } = useAuth()
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false)
@@ -43,15 +44,6 @@ export function Navigation({ activeSection, onSectionChange, user, onLogout }: N
       console.error('Error fetching notification count:', error)
     }
   }, [user?.id])
-
-  useEffect(() => {
-    if (user?.email) {
-      fetch(`/api/users/check-teacher?email=${encodeURIComponent(user.email)}`)
-        .then(res => res.json())
-        .then(data => setIsTeacher(data.isTeacher))
-        .catch(() => setIsTeacher(false))
-    }
-  }, [user?.email])
 
   useEffect(() => {
     fetchNotificationCount()
@@ -187,6 +179,7 @@ export function Navigation({ activeSection, onSectionChange, user, onLogout }: N
                     open={settingsOpen}
                     onOpenChange={setSettingsOpen}
                     user={user}
+                    isTeacher={isTeacher}
                   />
                 )}
               </>

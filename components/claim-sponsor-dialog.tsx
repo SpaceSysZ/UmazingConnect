@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -19,54 +19,27 @@ interface ClaimSponsorDialogProps {
   userId: string
   userName: string
   userEmail: string
-  userType?: string
+  // Passed from the parent so we don't fire one API call per club card.
+  // Parent fetches isVerifiedTeacher once and derives isAlreadySponsor
+  // from the club's memberRole field returned by /api/clubs.
+  isVerifiedTeacher: boolean
+  isAlreadySponsor: boolean
   onClaimSuccess: () => void
 }
 
-export function ClaimSponsorDialog({ 
-  clubId, 
-  clubName, 
-  userId, 
-  userName, 
+export function ClaimSponsorDialog({
+  clubId,
+  clubName,
+  userId,
+  userName,
   userEmail,
-  userType,
-  onClaimSuccess 
+  isVerifiedTeacher,
+  isAlreadySponsor,
+  onClaimSuccess,
 }: ClaimSponsorDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isConfirmed, setIsConfirmed] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-
-  // Check if user is verified teacher (email in curated list)
-  const [isVerifiedTeacher, setIsVerifiedTeacher] = useState(false)
-  const [isAlreadySponsor, setIsAlreadySponsor] = useState(false)
-  const [checkingStatus, setCheckingStatus] = useState(true)
-
-  useEffect(() => {
-    const checkStatus = async () => {
-      try {
-        setCheckingStatus(true)
-        
-        // Check if email is in teacher list
-        const teacherResponse = await fetch(`/api/users/check-teacher?email=${encodeURIComponent(userEmail)}`)
-        if (teacherResponse.ok) {
-          const teacherData = await teacherResponse.json()
-          setIsVerifiedTeacher(teacherData.isTeacher)
-        }
-
-        // Check if already a sponsor of this club
-        const sponsorResponse = await fetch(`/api/clubs/${clubId}/check-sponsor?userId=${userId}`)
-        if (sponsorResponse.ok) {
-          const sponsorData = await sponsorResponse.json()
-          setIsAlreadySponsor(sponsorData.isSponsor)
-        }
-      } catch (error) {
-        console.error("Error checking status:", error)
-      } finally {
-        setCheckingStatus(false)
-      }
-    }
-    checkStatus()
-  }, [userEmail, userId, clubId])
 
   const handleClaim = async () => {
     if (!isConfirmed) {
@@ -110,7 +83,6 @@ export function ClaimSponsorDialog({
   }
 
   // Don't show button if already a sponsor or not a teacher
-  if (checkingStatus) return null
   if (isAlreadySponsor) return null
   if (!isVerifiedTeacher) return null
 
