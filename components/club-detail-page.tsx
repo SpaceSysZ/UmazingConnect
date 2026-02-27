@@ -85,6 +85,28 @@ interface Club {
   memberRole: string | null
 }
 
+function renderTextWithLinks(text: string) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g
+  const parts = text.split(urlRegex)
+  return parts.map((part, i) => {
+    if (/^https?:\/\//.test(part)) {
+      return (
+        <a
+          key={i}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-500 hover:underline break-all"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {part}
+        </a>
+      )
+    }
+    return part
+  })
+}
+
 const categoryIcons = {
   academic: BookOpen,
   arts: Palette,
@@ -382,7 +404,7 @@ export function ClubDetailPage({ clubId }: { clubId: string }) {
                             </Button>
                           )}
                         </div>
-                        <p className="text-xs sm:text-sm">{post.content}</p>
+                        <p className="text-xs sm:text-sm whitespace-pre-wrap">{renderTextWithLinks(post.content)}</p>
                         {post.image_url && (
                           <img
                             src={post.image_url}
