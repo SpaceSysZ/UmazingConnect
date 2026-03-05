@@ -9,7 +9,7 @@ import { DevModeBanner } from '@/components/dev-mode-banner'
 import { ServiceWorkerRegister } from '@/components/service-worker-register'
 
 export const metadata: Metadata = {
-  title: 'BerkConnect - Berkeley Prep',
+  title: 'BerkConnect',
   description:
     'Connect with your school community. Share updates, join clubs, and stay informed about campus life.',
   generator: 'v0.app',
